@@ -1,0 +1,137 @@
+/* =========================================================================
+ * characters.css  —  캐릭터 아바타 표시 / 표정 애니메이션
+ * -------------------------------------------------------------------------
+ * Pairs with static/js/characters.js (window.renderCharacter).
+ * Design tokens (--ink, --gold, ...) come from style.css :root.
+ * All motion lives inside @media (prefers-reduced-motion: no-preference).
+ * ========================================================================= */
+
+/* --- anchor container: other code hangs speech bubbles / badges off this -- */
+.chr-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  vertical-align: bottom;
+}
+
+/* --- the avatar itself ---------------------------------------------------- */
+.chr {
+  display: inline-block;
+  line-height: 0;
+  transform-origin: center bottom;
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 300ms ease, filter 300ms ease, opacity 300ms ease;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.chr .chr__svg,
+.chr svg {
+  display: block;
+  overflow: visible;
+}
+
+/* --- static (non-motion) expression styling ------------------------------- */
+
+/* 다이 / 폴드: 회색조로 물러난 느낌 */
+.chr--folded {
+  filter: grayscale(0.75) opacity(0.55);
+  transform: translateY(4px) scale(0.96);
+}
+
+/* 승리: 부드러운 금빛 글로우 (모션과 무관하므로 항상 적용) */
+.chr--winner {
+  filter:
+    drop-shadow(0 0 7px rgba(227, 167, 47, 0.55))
+    drop-shadow(0 3px 6px rgba(227, 167, 47, 0.3));
+}
+
+/* 평상시: 애니메이션 없음 */
+.chr--normal {
+  animation: none;
+}
+
+/* --- motion --------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* 내 차례: 느리고 부드러운 위아래 바운스 */
+  @keyframes chr-turn-bounce {
+    0%   { transform: translateY(0); }
+    45%  { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* 고민중: 아주 살짝 갸웃 */
+  @keyframes chr-think-wobble {
+    0%   { transform: rotate(-4deg); }
+    50%  { transform: rotate(4deg); }
+    100% { transform: rotate(-4deg); }
+  }
+
+  /* 베팅: 한 번 툭 커졌다 안착 */
+  @keyframes chr-bet-pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.12); }
+    75%  { transform: scale(0.98); }
+    100% { transform: scale(1); }
+  }
+
+  /* 기쁨: 작게 콩 하고 뛰기 */
+  @keyframes chr-happy-hop {
+    0%   { transform: translateY(0) scale(1); }
+    35%  { transform: translateY(-7px) scale(1.04); }
+    70%  { transform: translateY(0) scale(0.98); }
+    100% { transform: translateY(0) scale(1); }
+  }
+
+  /* 놀람: 짧고 빠른 좌우 흔들림 */
+  @keyframes chr-surprise-shake {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-3px); }
+    40%  { transform: translateX(3px); }
+    60%  { transform: translateX(-2px); }
+    80%  { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+
+  /* 승리: 신나는 반복 바운스 */
+  @keyframes chr-winner-bounce {
+    0%   { transform: translateY(0) scale(1); }
+    40%  { transform: translateY(-8px) scale(1.05); }
+    65%  { transform: translateY(0) scale(0.97); }
+    100% { transform: translateY(0) scale(1); }
+  }
+
+  .chr--turn {
+    animation: chr-turn-bounce 1.1s ease-in-out infinite;
+  }
+
+  .chr--thinking {
+    transform-origin: center 85%;
+    animation: chr-think-wobble 2s ease-in-out infinite;
+  }
+
+  .chr--betting {
+    animation: chr-bet-pop 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 1 both;
+  }
+
+  .chr--happy {
+    animation: chr-happy-hop 500ms cubic-bezier(0.3, 1.3, 0.6, 1) 1 both;
+  }
+
+  .chr--surprised {
+    animation: chr-surprise-shake 380ms ease-in-out 1 both;
+  }
+
+  .chr--winner {
+    animation: chr-winner-bounce 0.7s ease-in-out infinite;
+  }
+
+  .chr--folded,
+  .chr--normal {
+    animation: none;
+  }
+}

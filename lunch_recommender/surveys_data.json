@@ -1,0 +1,36 @@
+{
+  "대균": {
+    "user_id": "대균",
+    "department": "개발팀",
+    "position": "",
+    "allergies": [],
+    "dislikes": [],
+    "category_scores": {
+      "한식": 5,
+      "고기": 5,
+      "국밥": 5,
+      "찌개": 4
+    },
+    "taste_preferences": {
+      "매운 음식": 4,
+      "국물 있는 음식": 5,
+      "고기 위주": 5
+    },
+    "lunch_styles": [
+      "든든한 식사"
+    ],
+    "budget": "15,000원 이하",
+    "recent_favorites": "국밥, 제육볶음",
+    "recent_fatigue": "",
+    "priority_order": [
+      "맛",
+      "거리"
+    ],
+    "data_collection_consent": true,
+    "preferences": {
+      "spicy_level": 4.0,
+      "soup": true,
+      "meat": true
+    }
+  }
+}

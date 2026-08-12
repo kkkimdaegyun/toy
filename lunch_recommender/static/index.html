@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사내 맞춤 점심 메뉴 AI 추천</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/survey" class="nav-link">📝 설문 등록</a>
+        <a href="/dashboard" class="nav-link">📊 대시보드</a>
+        <button onclick="resetAllSurveys()" class="nav-link" style="border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.1); cursor: pointer;" title="테스트 완료 후 제거 예정">🗑️ 설문 전체 초기화</button>
+        <div id="survey-status-badge"></div>
+    </div>
+
+    <div class="hero">
+        <h1>사내 맞춤 점심 메뉴 AI 추천</h1>
+        <p>참여 구성원 이름과 오늘 제외 조건·원하는 맛을 자연어로 입력하세요.<br>
+        📍 기본 위치: <strong>상암동 누리꿈스퀘어</strong> 1km 이내 실제 식당 대상</p>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="query-input" class="search-input"
+               placeholder="예: 오늘 국물 있는 얼큰한 한식 추천해줘"
+               onkeydown="if(event.key==='Enter') doSearch()">
+        <button class="search-btn" onclick="doSearch()">🔍</button>
+    </div>
+
+    <div class="example-chips">
+        <span class="example-chip" onclick="setQuery('오늘 국물 있는 얼큰한 한식 추천해줘')">💡 국물 있는 얼큰한 한식</span>
+        <span class="example-chip" onclick="setQuery('중식 제외하고 담백한 거 추천해줘')">💡 중식 제외 담백한 메뉴</span>
+        <span class="example-chip" onclick="setQuery('고기 위주 든든한 점심 추천해줘')">💡 고기 위주 든든한 점심</span>
+    </div>
+
+    <div class="results-section" id="results-section">
+        <div class="info-bar" id="info-bar"></div>
+        <div id="cards-container"></div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

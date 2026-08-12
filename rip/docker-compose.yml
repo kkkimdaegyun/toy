@@ -1,0 +1,15 @@
+services:
+  graveyard:
+    build: .
+    container_name: cyber-graveyard
+    ports:
+      - "8000:8000"     # http://localhost:8000 (HTTPS 없음)
+    volumes:
+      - graveyard-data:/data   # 묘비 기록(SQLite)은 컨테이너가 죽어도 보존
+    # ★ 중요 ★
+    # '최후의 버튼'으로 서버를 내렸을 때 컨테이너가 부활하면 안 되므로
+    # restart 정책은 반드시 "no" 로 둡니다. (기본값이지만 명시)
+    restart: "no"
+
+volumes:
+  graveyard-data:

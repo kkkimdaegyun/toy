@@ -1,0 +1,17 @@
+/* 내 패을 화면 상단에 고정해 첫 화면에서 바로 확인할 수 있게 합니다. */
+.my-area {
+  margin: 18px 0;
+  padding: 22px 26px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(231, 168, 76, .18), 0 16px 35px rgba(0, 0, 0, .18);
+}
+
+.hand-help { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.my-area .tile { width: 84px; height: 108px; }
+.my-area .tile-value { font-size: 42px; }
+.my-area .tile-color { font-size: 11px; }
+
+@media (max-width: 760px) {
+  .my-area .tile { width: 70px; height: 92px; }
+  .my-area .tile-value { font-size: 36px; }
+}

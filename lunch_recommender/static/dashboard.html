@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점심 추천 AI 성과 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="nav-link">🍱 추천 검색</a>
+        <a href="/survey" class="nav-link">📝 설문 등록</a>
+        <div id="survey-status-badge"></div>
+    </div>
+
+    <div class="hero">
+        <h1>📊 추천 AI 성과 대시보드</h1>
+        <p>Hit Rate(실제 방문률) · 평균 만족도 · 식당별 피드백 통계</p>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- KPI 카드 -->
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-value" id="hit-rate">—</div>
+                <div class="kpi-label">Hit Rate (방문률)</div>
+                <div class="kpi-sub" id="hit-detail"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="avg-satisfaction">—</div>
+                <div class="kpi-label">평균 만족도</div>
+                <div class="kpi-sub" id="sat-detail"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="total-feedback">—</div>
+                <div class="kpi-label">총 피드백 수</div>
+                <div class="kpi-sub">누적</div>
+            </div>
+        </div>
+
+        <!-- 식당별 테이블 -->
+        <div class="table-card">
+            <h2>🏪 식당별 피드백 통계</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>식당명</th>
+                            <th>피드백 수</th>
+                            <th>방문 수</th>
+                            <th>평균 별점</th>
+                            <th>만족도 바</th>
+                        </tr>
+                    </thead>
+                    <tbody id="restaurant-tbody">
+                        <tr><td colspan="5" style="text-align: center; color: #94a3b8;">로딩 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-card" id="recent-section">
+            <h2>📋 최근 피드백 이력</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>시간</th>
+                            <th>직원</th>
+                            <th>식당</th>
+                            <th>별점</th>
+                            <th>방문</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function loadDashboard() {
+        try {
+            const res = await fetch('/api/dashboard');
+            const data = await res.json();
+
+            document.getElementById('hit-rate').innerText = data.hit_rate + '%';
+            document.getElementById('hit-detail').innerText =
+                `${data.total_visited}건 방문 / ${data.total_feedback}건 추천`;
+            document.getElementById('avg-satisfaction').innerText =
+                data.avg_satisfaction > 0 ? data.avg_satisfaction + '점' : '—';
+            document.getElementById('sat-detail').innerText = '5점 만점';
+            document.getElementById('total-feedback').innerText = data.total_feedback;
+
+            // 식당별 통계
+            const tbody = document.getElementById('restaurant-tbody');
+            if (data.per_restaurant && data.per_restaurant.length > 0) {
+                tbody.innerHTML = data.per_restaurant.map(r => {
+                    const barWidth = Math.round(r.avg_rating / 5 * 100);
+                    const barColor = r.avg_rating >= 4 ? '#34d399' :
+                                     r.avg_rating >= 3 ? '#fbbf24' : '#f87171';
+                    return `<tr>
+                        <td style="font-weight: 600;">${r.name}</td>
+                        <td>${r.feedback_count}</td>
+                        <td>${r.visit_count}</td>
+                        <td><strong>${r.avg_rating}</strong></td>
+                        <td><div class="bar-bg"><div class="bar-fill" style="width:${barWidth}%;background:${barColor};"></div></div></td>
+                    </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">아직 피드백 데이터가 없습니다</td></tr>';
+            }
+
+            // 최근 피드백
+            const hRes = await fetch('/api/feedback/history');
+            const hData = await hRes.json();
+            const recentTbody = document.getElementById('recent-tbody');
+            const records = (hData.records || []).slice(-10).reverse();
+            if (records.length > 0) {
+                recentTbody.innerHTML = records.map(r => {
+                    const t = r.timestamp ? new Date(r.timestamp).toLocaleString('ko-KR', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+                    const targetRest = r.visited ? r.restaurant_name : (r.actual_restaurant_name ? `🔄 [대안] ${r.actual_restaurant_name}` : r.restaurant_name);
+                    const visitBadge = r.visited ? '👍 AI 추천 방문' : (r.actual_restaurant_name ? '👎 대안 식당 방문' : '❌ 미방문');
+                    return `<tr>
+                        <td style="font-size:13px;color:#94a3b8;">${t}</td>
+                        <td>${r.user_id}</td>
+                        <td style="font-weight:600;">${targetRest}</td>
+                        <td>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td>
+                        <td><span style="font-weight:600; color: ${r.visited ? '#34d399' : '#fb7185'};">${visitBadge}</span></td>
+                    </tr>`;
+                }).join('');
+            } else {
+                recentTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">피드백 이력 없음</td></tr>';
+            }
+
+        } catch (err) {
+            console.error('대시보드 로드 실패:', err);
+        }
+    }
+
+    loadDashboard();
+    </script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

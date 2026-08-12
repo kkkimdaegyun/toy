@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎭 마피아 게임</title>
+<meta name="description" content="온라인 마피아 게임 - 친구들과 함께 즐기는 실시간 마피아 게임">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a26;
+  --bg-input: #14141e;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-focus: rgba(120, 100, 255, 0.5);
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.4);
+  --text-time: rgba(255, 255, 255, 0.2);
+  --accent: #7c6aff;
+  --accent-glow: rgba(124, 106, 255, 0.15);
+  --mafia-color: #ff4757;
+  --doctor-color: #2ed573;
+  --police-color: #1e90ff;
+  --citizen-color: #a0a0a0;
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(124,106,255,0.06) 0%, transparent 60%);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(124,106,255,0.25); border-radius: 10px; }
+
+/* ── Screen System ── */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1), transform 0.45s cubic-bezier(0.4,0,0.2,1), visibility 0s 0.45s;
+  z-index: 1;
+  overflow-y: auto;
+}
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1), transform 0.45s cubic-bezier(0.4,0,0.2,1), visibility 0s 0s;
+  z-index: 10;
+}
+
+/* ── Night/Day mood tint ── */
+.screen.mood-night { background: linear-gradient(180deg, rgba(10,15,35,0.95) 0%, var(--bg-primary) 100%); }
+.screen.mood-day { background: linear-gradient(180deg, rgba(30,25,15,0.25) 0%, var(--bg-primary) 100%); }
+
+/* ── Common Elements ── */
+h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #b8a9ff 0%, var(--accent) 40%, #ff6ec7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+  font-weight: 400;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.card:hover {
+  border-color: rgba(124,106,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.25s;
+}
+.btn:active::after { background: rgba(255,255,255,0.1); }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #6a56e0);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(124,106,255,0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 6px 28px rgba(124,106,255,0.45);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled {
+  background: rgba(124,106,255,0.2);
+  color: rgba(255,255,255,0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+.btn-secondary:hover {
+  border-color: var(--accent);
+  background: rgba(124,106,255,0.08);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--mafia-color), #e03e4e);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255,71,87,0.3);
+}
+
+.btn-full { width: 100%; }
+.btn-lg { padding: 16px 36px; font-size: 1.05rem; border-radius: var(--radius-lg); }
+
+/* ── Inputs ── */
+.input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  width: 100%;
+}
+.input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.input::placeholder { color: var(--text-time); }
+
+.code-input {
+  font-family: 'Inter', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5em;
+  padding: 16px;
+}
+
+/* ── Stepper ── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stepper-label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.stepper-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.stepper-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+.stepper-btn:active { transform: scale(0.92); }
+.stepper-value {
+  width: 40px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Lobby ── */
+.lobby-container {
+  max-width: 720px;
+  width: 100%;
+}
+.lobby-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 640px) {
+  .lobby-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2rem; }
+}
+.stepper-row { margin-bottom: 14px; }
+.lobby-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Character Select ── */
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  max-width: 560px;
+  width: 100%;
+  margin-bottom: 28px;
+}
+@media (max-width: 600px) {
+  .char-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.char-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 18px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.char-card:hover:not(.taken) {
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(124,106,255,0.4);
+  box-shadow: 0 8px 24px rgba(124,106,255,0.15);
+}
+.char-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(124,106,255,0.3);
+  background: rgba(124,106,255,0.08);
+}
+.char-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(124,106,255,0.2);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.char-card.taken {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+.char-card.taken::before {
+  content: '✕';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: var(--mafia-color);
+  z-index: 2;
+}
+.char-emoji { font-size: 2.4rem; margin-bottom: 6px; display: block; }
+.char-name { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+
+/* ── Waiting Room ── */
+.waiting-container {
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.room-code-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px 28px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.room-code-display:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.room-code-text {
+  font-family: 'Inter', monospace;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+.room-code-copy {
+  font-size: 1.2rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.room-code-display:hover .room-code-copy { opacity: 1; }
+
+.config-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.player-count {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.player-grid-waiting {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.player-card-waiting {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 16px 8px;
+  text-align: center;
+  animation: playerJoin 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
+@keyframes playerJoin {
+  from { opacity: 0; transform: scale(0.8) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.player-card-waiting .char-emoji { font-size: 2rem; margin-bottom: 4px; }
+.player-card-waiting .char-name { font-size: 0.8rem; font-weight: 600; }
+
+.waiting-status {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ── Chat (shared lobby & game) ── */
+.chat-container {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.chat-container.mafia-chat {
+  border-color: rgba(255,71,87,0.2);
+  background: rgba(255,71,87,0.04);
+}
+.chat-header {
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chat-header.mafia-header { color: var(--mafia-color); }
+.chat-messages {
+  height: 180px;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chat-msg {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  animation: msgIn 0.25s ease-out;
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(6px); } }
+.chat-msg-sender { font-weight: 600; margin-right: 6px; }
+.chat-msg-content { color: rgba(255,255,255,0.8); }
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.chat-input-row .input { border-radius: 10px; font-size: 0.85rem; padding: 10px 14px; }
+.chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.chat-send-btn:hover { box-shadow: 0 4px 16px rgba(124,106,255,0.4); }
+.chat-send-btn:active { transform: scale(0.92); }
+
+/* ── Game Screen ── */
+.game-layout {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+}
+
+/* Top bar */
+.game-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+.phase-badge.night { color: #7eb8ff; border-color: rgba(126,184,255,0.2); background: rgba(126,184,255,0.06); }
+.phase-badge.discussion { color: #ffd43b; border-color: rgba(255,212,59,0.2); background: rgba(255,212,59,0.06); }
+.phase-badge.vote { color: #ff922b; border-color: rgba(255,146,43,0.2); background: rgba(255,146,43,0.06); }
+.phase-badge.day { color: #fcc419; border-color: rgba(252,196,25,0.2); background: rgba(252,196,25,0.06); }
+
+.round-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.timer-container {
+  flex: 1;
+  min-width: 80px;
+}
+.timer-bar-bg {
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.timer-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 1s linear, background 0.5s;
+}
+.timer-bar-fill.low { background: var(--mafia-color); }
+.timer-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Player grid game */
+.game-center {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.player-grid-game {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.player-card-game {
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 16px 8px;
+  text-align: center;
+  transition: all 0.25s;
+  cursor: default;
+  position: relative;
+}
+.player-card-game.clickable { cursor: pointer; }
+.player-card-game.clickable:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+.player-card-game.selected-mafia {
+  border-color: var(--mafia-color);
+  box-shadow: 0 0 20px rgba(255,71,87,0.25);
+  background: rgba(255,71,87,0.06);
+}
+.player-card-game.selected-doctor {
+  border-color: var(--doctor-color);
+  box-shadow: 0 0 20px rgba(46,213,115,0.25);
+  background: rgba(46,213,115,0.06);
+}
+.player-card-game.selected-police {
+  border-color: var(--police-color);
+  box-shadow: 0 0 20px rgba(30,144,255,0.25);
+  background: rgba(30,144,255,0.06);
+}
+.player-card-game.selected-vote {
+  border-color: #ff922b;
+  box-shadow: 0 0 20px rgba(255,146,43,0.25);
+  background: rgba(255,146,43,0.06);
+}
+.player-card-game.dead {
+  opacity: 0.35;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+}
+.player-card-game.dead::after {
+  content: '☠️';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+}
+.player-card-game .char-emoji { font-size: 2rem; margin-bottom: 4px; display: block; }
+.player-card-game .char-name { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+
+.night-sleep-msg {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  font-size: 1.3rem;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+.action-prompt {
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+/* ── Game Bottom Area ── */
+.game-bottom {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.game-chat-messages {
+  height: 320px;
+  min-height: 250px;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.98rem;
+}
+.chat-msg.system-msg {
+  background: rgba(124, 106, 255, 0.14);
+  border-left: 4px solid var(--accent);
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+.chat-msg.dead-chat-msg {
+  background: rgba(165, 94, 234, 0.14);
+  border-left: 4px solid #a55eea;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+/* ── Role Badge ── */
+.my-role-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: all 0.3s;
+}
+.my-role-badge.mafia { border-color: rgba(255,71,87,0.3); color: var(--mafia-color); }
+.my-role-badge.doctor { border-color: rgba(46,213,115,0.3); color: var(--doctor-color); }
+.my-role-badge.police { border-color: rgba(30,144,255,0.3); color: var(--police-color); }
+.my-role-badge.citizen { border-color: rgba(160,160,160,0.3); color: var(--citizen-color); }
+
+.spectator-badge {
+  position: fixed;
+  bottom: 50px;
+  right: 16px;
+  background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.2);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mafia-color);
+  z-index: 100;
+  display: none;
+}
+
+/* ── System Banner ── */
+.system-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 200;
+  pointer-events: none;
+}
+.system-banner-inner {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  padding: 16px 32px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: bannerIn 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  max-width: 500px;
+}
+@keyframes bannerIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.banner-exit {
+  animation: bannerOut 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
+@keyframes bannerOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--mafia-color);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 500;
+  box-shadow: 0 8px 30px rgba(255,71,87,0.3);
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--doctor-color); box-shadow: 0 8px 30px rgba(46,213,115,0.3); }
+.toast.info { background: var(--accent); box-shadow: 0 8px 30px rgba(124,106,255,0.3); }
+
+/* ── Modal Overlay ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s, visibility 0s 0.4s;
+  padding: 20px;
+}
+.modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s, visibility 0s;
+}
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.modal-overlay.show .modal-content { transform: scale(1); }
+.modal-emoji { font-size: 4rem; margin-bottom: 16px; display: block; }
+.modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+.modal-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6; }
+
+/* ── Game Over ── */
+.gameover-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s, visibility 0s 0.5s;
+  padding: 20px;
+  overflow-y: auto;
+}
+.gameover-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s, visibility 0s;
+}
+.gameover-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  animation: bounceIn 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.gameover-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 20px 0 28px;
+}
+.gameover-player-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 14px 8px;
+  text-align: center;
+}
+.gameover-player-card .char-emoji { font-size: 1.8rem; }
+.gameover-player-card .char-name { font-size: 0.78rem; font-weight: 600; }
+.gameover-player-card .role-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.role-tag.mafia { background: rgba(255,71,87,0.15); color: var(--mafia-color); }
+.role-tag.doctor { background: rgba(46,213,115,0.15); color: var(--doctor-color); }
+.role-tag.police { background: rgba(30,144,255,0.15); color: var(--police-color); }
+.role-tag.citizen { background: rgba(160,160,160,0.15); color: var(--citizen-color); }
+
+/* ── Reconnect Banner ── */
+.reconnect-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--mafia-color);
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 600;
+  display: none;
+}
+
+/* ── Action Buttons (confirm night/vote) ── */
+.action-btn-container {
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* ── Global Lobby Chat ── */
+.global-chat-card {
+  width: 100%;
+  margin-top: 24px;
+}
+.global-chat-messages {
+  height: 220px;
+  overflow-y: auto;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+.room-code-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(124,106,255,0.18);
+}
+.room-code-link:hover {
+  background: rgba(124,106,255,0.35);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .game-topbar { padding: 10px 14px; gap: 8px; }
+  .player-grid-game { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .game-center { padding: 12px 14px; }
+  .modal-content { padding: 28px 20px; }
+  .gameover-title { font-size: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOAST ── -->
+<div id="toast" class="toast"></div>
+
+<!-- ── RECONNECT BANNER ── -->
+<div id="reconnectBanner" class="reconnect-banner">연결이 끊어졌습니다. 재연결 중...</div>
+
+<!-- ── SYSTEM BANNER ── -->
+<div id="systemBanner" class="system-banner" style="display:none;"></div>
+
+<!-- ══════ SCREEN 1: LOBBY ══════ -->
+<div id="lobbyScreen" class="screen active">
+  <div class="lobby-container">
+    <!-- Top Header Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px; background:var(--bg-card); padding:20px 28px; border-radius:16px; border:1px solid var(--border-subtle);">
+      <div>
+        <h1 style="font-size:1.8rem; margin:0;">🎭 마피아 게임 광장</h1>
+        <p class="subtitle" style="margin:4px 0 0; font-size:0.9rem;">친구들과 함께하는 실시간 온라인 마피아</p>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input id="joinCodeInput" class="input" style="width:105px; text-align:center; padding:10px; font-weight:800; letter-spacing:2px; font-size:1rem;" placeholder="방코드" maxlength="4">
+          <button class="btn" style="background:var(--bg-input); color:#fff; font-weight:700; padding:10px 14px;" onclick="requestRoomInfo()">입장</button>
+        </div>
+        <button class="btn btn-primary" style="background:var(--accent); font-size:0.95rem; padding:12px 20px; font-weight:800; border-radius:12px; box-shadow:0 4px 20px rgba(124,106,255,0.35);" onclick="openCreateRoomModal()">✨ + 새 게임방 만들기</button>
+      </div>
+    </div>
+    <!-- Active Rooms List Card (방 번호 목록) -->
+    <div class="card" style="width:100%; margin-top:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="lobby-card-title" style="margin-bottom:0;">📋 실시간 개설된 방 번호 목록 (원클릭 바로 참가)</div>
+        <span id="activeRoomCountBadge" style="background:rgba(46,213,115,0.2); color:#2ed573; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">0개 방 대기 중</span>
+      </div>
+      <div id="activeRoomsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; max-height:220px; overflow-y:auto; padding:4px;">
+        <div style="color:var(--text-secondary); text-align:center; padding:24px; grid-column:1/-1;">현재 개설된 방이 없습니다. [방 만들기]를 눌러 첫 방 번호를 생성해보세요!</div>
+      </div>
+    </div>
+    <!-- Global Lobby Chat Card -->
+    <div class="card global-chat-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="lobby-card-title" style="margin-bottom:0;">🌐 로비 자유 광장 (방번호 공유 & 모집)</div>
+        <div id="globalUserCountBadge" style="background:rgba(124,106,255,0.2); color:#7c6aff; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">🟢 접속자 1명</div>
+      </div>
+      <div id="globalChatMessages" class="global-chat-messages">
+        <div class="chat-msg system-msg">
+          <span class="chat-msg-sender" style="color:#7c6aff; font-weight:700;">📢 광장 안내</span>
+          <span class="chat-msg-content">대기방에 들어가기 전 방번호를 공유하고 사람들을 초대하세요! (채팅 중 4자리 방번호를 클릭하면 자동으로 방 참가 코드에 입력됩니다)</span>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <input id="globalChatSender" class="input" type="text" placeholder="닉네임" value="익명" style="width:85px; padding:10px; text-align:center;">
+        <input id="globalChatInput" class="input" type="text" placeholder="예: 1234 방 마피아 2명 더 오세요!" style="flex:1;" onkeydown="if(event.key==='Enter') sendGlobalChat()">
+        <button class="btn btn-primary" onclick="sendGlobalChat()">전송</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room Modal (방 만들기 모달 - 새 게임방을 만드는 사람만 확인) -->
+<div id="createRoomModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:460px; text-align:left; padding:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h3 style="margin:0; font-size:1.35rem; color:#fff;">🏠 새 게임방 개설 설정</h3>
+      <button class="btn btn-sm" style="background:transparent; color:var(--text-secondary); font-size:1.2rem;" onclick="closeCreateRoomModal()">✕</button>
+    </div>
+
+    <!-- 사전 방번호 가발급 패널 -->
+    <div style="background:var(--bg-input); border:2px solid rgba(124,106,255,0.45); border-radius:12px; padding:14px; margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">🏷️ 개설 예정 방 번호 (사전 협의용)</span>
+        <button class="btn btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="generateReservedRoomId()">🔄 번호 교체</button>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input id="reservedRoomIdInput" class="input" type="text" maxlength="4" readonly style="width:95px; text-align:center; font-weight:900; font-size:1.25rem; color:var(--accent); letter-spacing:3px; background:rgba(124,106,255,0.15);">
+        <button class="btn btn-primary" style="flex:1; padding:11px; font-size:0.85rem; font-weight:700; background:var(--accent);" onclick="announcePreCreateRoom()">📢 광장에 설정 공유 & 유저 모집</button>
+      </div>
+    </div>
+
+    <div class="stepper-row stepper" style="margin-bottom:10px;">
+      <span class="stepper-label">🔪 마피아 인원</span>
+      <button class="stepper-btn" onclick="stepValue('cfgMafia',-1,1,4)">−</button>
+      <span id="cfgMafia" class="stepper-value">1</span>
+      <button class="stepper-btn" onclick="stepValue('cfgMafia',1,1,4)">+</button>
+    </div>
+    <div class="stepper-row stepper" style="margin-bottom:10px;">
+      <span class="stepper-label">💊 의사 인원</span>
+      <button class="stepper-btn" onclick="stepValue('cfgDoctor',-1,0,2)">−</button>
+      <span id="cfgDoctor" class="stepper-value">1</span>
+      <button class="stepper-btn" onclick="stepValue('cfgDoctor',1,0,2)">+</button>
+    </div>
+    <div class="stepper-row stepper" style="margin-bottom:10px;">
+      <span class="stepper-label">🔍 경찰 인원</span>
+      <button class="stepper-btn" onclick="stepValue('cfgPolice',-1,0,2)">−</button>
+      <span id="cfgPolice" class="stepper-value">1</span>
+      <button class="stepper-btn" onclick="stepValue('cfgPolice',1,0,2)">+</button>
+    </div>
+    <div class="stepper-row stepper" style="margin-bottom:22px;">
+      <span class="stepper-label">💬 토론 시간</span>
+      <button class="stepper-btn" onclick="stepTime(-15)">−</button>
+      <span id="cfgDiscTime" class="stepper-value">60초</span>
+      <button class="stepper-btn" onclick="stepTime(15)">+</button>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn" style="flex:1; background:var(--bg-input); color:var(--text-secondary);" onclick="closeCreateRoomModal()">취소</button>
+      <button class="btn btn-primary" style="flex:2; font-size:0.95rem; padding:13px; font-weight:800;" onclick="goToCharSelect('create')">🚀 이 설정으로 방 만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN 2: CHARACTER SELECT ══════ -->
+<div id="charSelectScreen" class="screen">
+  <h2 style="margin-bottom:4px;">캐릭터를 선택하세요</h2>
+  <p class="subtitle">다른 플레이어에게 보이는 익명 캐릭터입니다</p>
+  <div id="charGrid" class="char-grid"></div>
+  <button id="charConfirmBtn" class="btn btn-primary btn-lg" disabled onclick="confirmCharacter()">입장</button>
+</div>
+
+<!-- ══════ SCREEN 3: WAITING ROOM ══════ -->
+<div id="waitingScreen" class="screen">
+  <div class="waiting-container">
+    <h2>대기실</h2>
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+      <div id="roomCodeDisplay" class="room-code-display" onclick="copyRoomCode()" style="margin-bottom:0;">
+        <span id="roomCodeText" class="room-code-text">----</span>
+        <span class="room-code-copy">📋</span>
+      </div>
+      <button class="btn btn-primary" style="background:var(--accent); padding:12px 18px; font-weight:700; border-radius:12px;" onclick="promoteRoomToGlobal()">📢 광장에 방 홍보하기</button>
+    </div>
+    <div id="configBadge" class="config-badge"></div>
+    <div id="playerCount" class="player-count"></div>
+    <div id="waitingPlayerGrid" class="player-grid-waiting"></div>
+    <div id="hostControls" style="display:none; width:100%; text-align:center;">
+      <button id="startGameBtn" class="btn btn-primary btn-lg btn-full" disabled onclick="sendStartGame()">🎮 게임 시작</button>
+    </div>
+    <div id="nonHostStatus" class="waiting-status" style="display:none;">방장이 게임을 시작할 때까지 대기 중...</div>
+    <!-- Waiting room chat -->
+    <div class="chat-container" style="max-height:280px;">
+      <div class="chat-header">💬 대기실 채팅</div>
+      <div id="lobbyChatMessages" class="chat-messages"></div>
+      <div class="chat-input-row">
+        <input id="lobbyChatInput" class="input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter')sendLobbyChat()">
+        <button class="chat-send-btn" onclick="sendLobbyChat()">➤</button>
+      </div>
+    </div>
+    <!-- Global lobby chat inside waiting room -->
+    <div class="card global-chat-card" style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="lobby-card-title" style="margin-bottom:0; font-size:0.95rem;">🌐 전체 로비 광장 채팅 (홍보 & 유저 모집)</div>
+        <div id="waitingGlobalUserCountBadge" style="background:rgba(124,106,255,0.2); color:#7c6aff; padding:3px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;">🟢 접속자 1명</div>
+      </div>
+      <div id="waitingGlobalChatMessages" class="global-chat-messages" style="height:150px;"></div>
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <input id="waitingGlobalChatSender" class="input" type="text" placeholder="닉네임" value="방장" style="width:75px; padding:8px; text-align:center;">
+        <input id="waitingGlobalChatInput" class="input" type="text" placeholder="광장에 메시지 보내기..." style="flex:1;" onkeydown="if(event.key==='Enter') sendWaitingGlobalChat()">
+        <button class="btn btn-primary" onclick="sendWaitingGlobalChat()">전송</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN 4: GAME ══════ -->
+<div id="gameScreen" class="screen">
+  <div class="game-layout">
+    <!-- Top bar -->
+    <div class="game-topbar">
+      <div id="phaseBadge" class="phase-badge night">🌙 밤</div>
+      <div id="roundBadge" class="round-badge">라운드 1</div>
+      <div class="timer-container">
+        <div class="timer-bar-bg"><div id="timerBarFill" class="timer-bar-fill" style="width:100%;"></div></div>
+        <div id="timerText" class="timer-text">30초</div>
+      </div>
+    </div>
+    <!-- Center -->
+    <div class="game-center">
+      <div id="actionPrompt" class="action-prompt" style="display:none;"></div>
+      <div id="nightSleepMsg" class="night-sleep-msg" style="display:none;">💤 잠을 자고 있습니다...</div>
+      <div id="gamePlayerGrid" class="player-grid-game"></div>
+      <div id="actionBtnContainer" class="action-btn-container" style="display:none;"></div>
+    </div>
+    <!-- Bottom chat -->
+    <div id="gameBottomChat" class="game-bottom">
+      <div class="chat-container" style="border:none; border-radius:0;">
+        <div id="gameChatHeader" class="chat-header">💬 채팅</div>
+        <div id="gameChatMessages" class="game-chat-messages"></div>
+        <div id="gameChatInputRow" class="chat-input-row">
+          <input id="gameChatInput" class="input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter')sendGameChat()">
+          <button class="chat-send-btn" onclick="sendGameChat()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Role Badge (fixed) ── -->
+<div id="myRoleBadge" class="my-role-badge" style="display:none;"></div>
+<div id="spectatorBadge" class="spectator-badge">👁️ 관전 중</div>
+
+<!-- ── Role Reveal Modal ── -->
+<div id="roleRevealModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-emoji" id="roleRevealEmoji"></span>
+    <div class="modal-title" id="roleRevealTitle"></div>
+    <div class="modal-desc" id="roleRevealDesc"></div>
+    <button class="btn btn-primary" onclick="closeRoleReveal()">확인</button>
+  </div>
+</div>
+
+<!-- ── Police Result Modal ── -->
+<div id="policeResultModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-emoji">🔍</span>
+    <div class="modal-title">조사 결과</div>
+    <div class="modal-desc" id="policeResultText"></div>
+    <button class="btn btn-primary" onclick="closePoliceResult()">확인</button>
+  </div>
+</div>
+
+<!-- ── Game Over Overlay ── -->
+<div id="gameOverOverlay" class="gameover-overlay">
+  <div id="gameOverTitle" class="gameover-title"></div>
+  <p id="gameOverMsg" class="subtitle"></p>
+  <div id="gameOverPlayers" class="gameover-players"></div>
+  <button class="btn btn-primary btn-lg" onclick="backToLobby()">🏠 로비로 돌아가기</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let ws = null;
+let currentScreen = 'lobby';
+let myCharacterId = null;
+let myRole = null;
+let myRoleDisplay = null;
+let isHost = false;
+let roomId = null;
+let roomConfig = null;
+let players = [];
+let gamePhase = null;
+let nightActionType = null;
+let nightTargets = [];
+let selectedTarget = null;
+let timerInterval = null;
+let timerRemaining = 0;
+let timerTotal = 0;
+let minPlayers = 4;
+let joinMode = null; // 'create' or 'join'
+let takenCharacters = [];
+let myAlive = true;
+let mafiaAllies = [];
+
+const CHARACTERS = [
+  {id:'wolf',emoji:'🐺',name:'늑대'},
+  {id:'fox',emoji:'🦊',name:'여우'},
+  {id:'cat',emoji:'🐱',name:'고양이'},
+  {id:'rabbit',emoji:'🐰',name:'토끼'},
+  {id:'bear',emoji:'🐻',name:'곰'},
+  {id:'lion',emoji:'🦁',name:'사자'},
+  {id:'frog',emoji:'🐸',name:'개구리'},
+  {id:'penguin',emoji:'🐧',name:'펭귄'},
+  {id:'dog',emoji:'🐶',name:'강아지'},
+  {id:'owl',emoji:'🦉',name:'부엉이'},
+  {id:'tiger',emoji:'🐯',name:'호랑이'},
+  {id:'panda',emoji:'🐼',name:'판다'},
+];
+
+function getCharacter(id) { return CHARACTERS.find(c => c.id === id); }
+
+// ══════════════════════════════════════════════
+//  SCREEN TRANSITIONS
+// ══════════════════════════════════════════════
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(screenId);
+  if (el) {
+    el.classList.add('active');
+    currentScreen = screenId.replace('Screen','');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function showToast(msg, type='error') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════
+//  SYSTEM BANNER
+// ══════════════════════════════════════════════
+function showBanner(msg, duration=4000) {
+  const b = document.getElementById('systemBanner');
+  b.style.display = 'flex';
+  b.innerHTML = `<div class="system-banner-inner">${msg}</div>`;
+  const inner = b.querySelector('.system-banner-inner');
+  setTimeout(() => {
+    inner.classList.add('banner-exit');
+    setTimeout(() => { b.style.display = 'none'; inner.classList.remove('banner-exit'); }, 400);
+  }, duration);
+}
+
+// ══════════════════════════════════════════════
+//  STEPPER
+// ══════════════════════════════════════════════
+function stepValue(id, delta, min, max) {
+  const el = document.getElementById(id);
+  let v = parseInt(el.textContent) + delta;
+  v = Math.max(min, Math.min(max, v));
+  el.textContent = v;
+}
+
+// ══════════════════════════════════════════════
+//  LOBBY → CHAR SELECT
+// ══════════════════════════════════════════════
+let cfgDiscSeconds = 60;
+function stepTime(delta) {
+  cfgDiscSeconds = Math.max(15, Math.min(300, cfgDiscSeconds + delta));
+  document.getElementById('cfgDiscTime').textContent = cfgDiscSeconds + '초';
+}
+
+function goToCharSelect(mode) {
+  joinMode = mode;
+  if (mode === 'create') {
+    closeCreateRoomModal();
+    roomConfig = {
+      mafia: parseInt(document.getElementById('cfgMafia').textContent),
+      doctor: parseInt(document.getElementById('cfgDoctor').textContent),
+      police: parseInt(document.getElementById('cfgPolice').textContent),
+      discussion_time: cfgDiscSeconds,
+    };
+    takenCharacters = [];
+  }
+  renderCharGrid();
+  showScreen('charSelectScreen');
+}
+
+function openCreateRoomModal() {
+  generateReservedRoomId();
+  document.getElementById('createRoomModal').classList.add('show');
+}
+
+function closeCreateRoomModal() {
+  document.getElementById('createRoomModal').classList.remove('show');
+}
+
+function requestRoomInfo() {
+  const code = document.getElementById('joinCodeInput').value.trim();
+  if (code.length !== 4) { showToast('4자리 코드를 입력해주세요.'); return; }
+  connectWS(() => {
+    wsSend({action: 'get_room_info', room_id: code});
+  });
+}
+
+// ══════════════════════════════════════════════
+//  CHARACTER GRID
+// ══════════════════════════════════════════════
+function renderCharGrid() {
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+  myCharacterId = null;
+  document.getElementById('charConfirmBtn').disabled = true;
+
+  CHARACTERS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'char-card' + (takenCharacters.includes(c.id) ? ' taken' : '');
+    div.innerHTML = `<span class="char-emoji">${c.emoji}</span><span class="char-name">${c.name}</span>`;
+    if (!takenCharacters.includes(c.id)) {
+      div.addEventListener('click', () => selectCharacter(c.id, div));
+    }
+    grid.appendChild(div);
+  });
+}
+
+function selectCharacter(id, el) {
+  document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  myCharacterId = id;
+  document.getElementById('charConfirmBtn').disabled = false;
+}
+
+function confirmCharacter() {
+  if (!myCharacterId) return;
+  if (joinMode === 'create') {
+    const rInput = document.getElementById('reservedRoomIdInput');
+    const requestedRoomId = rInput ? rInput.value.trim() : '';
+    connectWS(() => {
+      wsSend({action: 'create_room', config: roomConfig, character_id: myCharacterId, room_id: requestedRoomId});
+    });
+  } else if (joinMode === 'join') {
+    wsSend({action: 'join_room', room_id: roomId, character_id: myCharacterId});
+  }
+}
+
+function generateReservedRoomId() {
+  const num = Math.floor(1000 + Math.random() * 9000);
+  const input = document.getElementById('reservedRoomIdInput');
+  if (input) input.value = String(num);
+}
+
+function announcePreCreateRoom() {
+  const rId = document.getElementById('reservedRoomIdInput').value;
+  const m = document.getElementById('cfgMafia').textContent;
+  const d = document.getElementById('cfgDoctor').textContent;
+  const p = document.getElementById('cfgPolice').textContent;
+  const disc = document.getElementById('cfgDiscTime').textContent;
+
+  connectWS(() => {
+    wsSend({
+      action: 'global_chat',
+      sender: '📢 방 개설 예정자',
+      content: `🔥 [방 개설 예정 공지] 방 번호 ${rId}번으로 개설 준비 중! 🔪 마피아 ${m} / 💊 의사 ${d} / 🔍 경찰 ${p} (의견 있으면 채팅으로 말씀해주세요!)`
+    });
+  });
+  showToast(`🌐 로비 광장에 방 번호 [${rId}] 개설 예정 메시지를 보냈습니다!`, 'success');
+}
+
+// ══════════════════════════════════════════════
+//  WAITING ROOM
+// ══════════════════════════════════════════════
+function renderWaitingRoom() {
+  document.getElementById('roomCodeText').textContent = roomId || '----';
+  const cfg = roomConfig || {};
+  document.getElementById('configBadge').textContent = `🔪 마피아 ${cfg.mafia||0} / 💊 의사 ${cfg.doctor||0} / 🔍 경찰 ${cfg.police||0}`;
+  updatePlayerCount();
+  renderWaitingPlayers();
+
+  if (isHost) {
+    document.getElementById('hostControls').style.display = 'block';
+    document.getElementById('nonHostStatus').style.display = 'none';
+    updateStartButton();
+  } else {
+    document.getElementById('hostControls').style.display = 'none';
+    document.getElementById('nonHostStatus').style.display = 'block';
+  }
+}
+
+function updatePlayerCount() {
+  const el = document.getElementById('playerCount');
+  el.textContent = `${players.length}/${minPlayers}명 (최소 ${minPlayers}명)`;
+}
+
+function updateStartButton() {
+  const btn = document.getElementById('startGameBtn');
+  btn.disabled = players.length < minPlayers;
+}
+
+function renderWaitingPlayers() {
+  const grid = document.getElementById('waitingPlayerGrid');
+  grid.innerHTML = '';
+  players.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'player-card-waiting';
+    div.style.animationDelay = `${i * 0.08}s`;
+    const ch = getCharacter(p.character_id) || {emoji: '❓', name: p.character_id};
+    div.innerHTML = `<span class="char-emoji">${p.emoji || ch.emoji}</span><span class="char-name">${p.name || ch.name}</span>`;
+    grid.appendChild(div);
+  });
+}
+
+function copyRoomCode() {
+  if (!roomId) return;
+  navigator.clipboard.writeText(roomId).then(() => {
+    showToast('복사됨!', 'success');
+  }).catch(() => {});
+}
+
+function sendStartGame() {
+  wsSend({action: 'start_game'});
+}
+
+// ══════════════════════════════════════════════
+//  LOBBY CHAT
+// ══════════════════════════════════════════════
+function sendLobbyChat() {
+  const input = document.getElementById('lobbyChatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  wsSend({action: 'chat', content: val});
+  input.value = '';
+}
+
+function appendLobbyChat(sender, content) {
+  const box = document.getElementById('lobbyChatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<span class="chat-msg-sender">${sender}</span><span class="chat-msg-content">${escapeHtml(content)}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ══════════════════════════════════════════════
+//  GAME SCREEN
+// ══════════════════════════════════════════════
+function renderGameScreen() {
+  updatePhaseUI();
+  renderGamePlayers();
+  updateGameChat();
+  updateRoleBadge();
+  updateAliveStatus();
+}
+
+function updatePhaseUI() {
+  const badge = document.getElementById('phaseBadge');
+  const gs = document.getElementById('gameScreen');
+  gs.classList.remove('mood-night', 'mood-day');
+
+  if (gamePhase === 'night') {
+    badge.className = 'phase-badge night';
+    badge.textContent = '🌙 밤';
+    gs.classList.add('mood-night');
+  } else if (gamePhase === 'discussion') {
+    badge.className = 'phase-badge discussion';
+    badge.textContent = '💬 토론';
+    gs.classList.add('mood-day');
+  } else if (gamePhase === 'vote') {
+    badge.className = 'phase-badge vote';
+    badge.textContent = '🗳️ 투표';
+    gs.classList.add('mood-day');
+  }
+}
+
+function renderGamePlayers() {
+  const grid = document.getElementById('gamePlayerGrid');
+  grid.innerHTML = '';
+  const sleepMsg = document.getElementById('nightSleepMsg');
+  const prompt = document.getElementById('actionPrompt');
+  const actionCont = document.getElementById('actionBtnContainer');
+
+  sleepMsg.style.display = 'none';
+  prompt.style.display = 'none';
+  actionCont.style.display = 'none';
+  actionCont.innerHTML = '';
+  selectedTarget = null;
+
+  const isCitizen = (myRole === 'citizen');
+  const isNight = (gamePhase === 'night');
+  const isVote = (gamePhase === 'vote');
+  const amDead = !myAlive;
+
+  // Night: citizens sleep
+  if (isNight && isCitizen && !amDead) {
+    sleepMsg.style.display = 'block';
+  }
+  // Night: role-specific prompt
+  if (isNight && nightActionType && !amDead) {
+    prompt.style.display = 'block';
+    if (nightActionType === 'mafia') prompt.textContent = '🔪 제거할 대상을 선택하세요';
+    else if (nightActionType === 'doctor') prompt.textContent = '💊 보호할 대상을 선택하세요';
+    else if (nightActionType === 'police') prompt.textContent = '🔍 조사할 대상을 선택하세요';
+  }
+  // Vote prompt
+  if (isVote && !amDead) {
+    prompt.style.display = 'block';
+    prompt.textContent = '🗳️ 추방할 대상을 투표하세요';
+  }
+
+  // Which targets can be clicked
+  const canAct = !amDead;
+  const clickableIds = new Set();
+  if (isNight && nightActionType && canAct) {
+    nightTargets.forEach(t => { if (t.alive) clickableIds.add(t.character_id); });
+  }
+  if (isVote && canAct) {
+    players.forEach(p => { if (p.alive && p.character_id !== myCharacterId) clickableIds.add(p.character_id); });
+  }
+
+  const selectionClass = isVote ? 'selected-vote' :
+    (nightActionType === 'mafia' ? 'selected-mafia' :
+    (nightActionType === 'doctor' ? 'selected-doctor' :
+    (nightActionType === 'police' ? 'selected-police' : 'selected-vote')));
+
+  players.forEach(p => {
+    const div = document.createElement('div');
+    const ch = getCharacter(p.character_id) || {emoji:'❓', name: p.character_id};
+    const isDead = !p.alive;
+    let cls = 'player-card-game';
+    if (isDead) cls += ' dead';
+    const isClickable = clickableIds.has(p.character_id) && !isDead;
+    if (isClickable) cls += ' clickable';
+    div.className = cls;
+    div.innerHTML = `<span class="char-emoji">${p.emoji || ch.emoji}</span><span class="char-name">${p.name || ch.name}</span>`;
+
+    if (isClickable) {
+      div.addEventListener('click', () => {
+        grid.querySelectorAll('.player-card-game').forEach(c => c.classList.remove(selectionClass));
+        div.classList.add(selectionClass);
+        selectedTarget = p.character_id;
+        showActionButton(isVote ? 'vote' : 'night');
+      });
+    }
+    grid.appendChild(div);
+  });
+}
+
+function showActionButton(type) {
+  const cont = document.getElementById('actionBtnContainer');
+  cont.style.display = 'block';
+  if (type === 'vote') {
+    cont.innerHTML = '<button class="btn btn-primary btn-lg" onclick="submitVote()">🗳️ 투표</button>';
+  } else {
+    cont.innerHTML = '<button class="btn btn-primary btn-lg" onclick="submitNightAction()">✅ 선택 완료</button>';
+  }
+}
+
+function submitNightAction() {
+  if (!selectedTarget) return;
+  wsSend({action: 'night_action', target: selectedTarget});
+  document.getElementById('actionBtnContainer').innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">선택 완료! 다른 플레이어를 기다리는 중...</p>';
+  document.querySelectorAll('.player-card-game.clickable').forEach(c => {
+    c.classList.remove('clickable');
+    c.style.pointerEvents = 'none';
+  });
+}
+
+function submitVote() {
+  if (!selectedTarget) return;
+  wsSend({action: 'vote', target: selectedTarget});
+  document.getElementById('actionBtnContainer').innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">투표 완료!</p>';
+  document.querySelectorAll('.player-card-game.clickable').forEach(c => {
+    c.classList.remove('clickable');
+    c.style.pointerEvents = 'none';
+  });
+}
+
+// ══════════════════════════════════════════════
+//  GLOBAL LOBBY CHAT
+// ══════════════════════════════════════════════
+function sendGlobalChat() {
+  const senderInput = document.getElementById('globalChatSender');
+  const input = document.getElementById('globalChatInput');
+  const content = input.value.trim();
+  if (!content) return;
+
+  connectWS(() => {
+    wsSend({
+      action: 'global_chat',
+      sender: senderInput.value.trim() || '익명',
+      content: content
+    });
+  });
+  input.value = '';
+}
+
+function appendGlobalChat(sender, content) {
+  const box1 = document.getElementById('globalChatMessages');
+  const box2 = document.getElementById('waitingGlobalChatMessages');
+
+  const escaped = escapeHtml(content);
+  const formatted = escaped.replace(/\b(\d{4})\b/g, '<span class="room-code-link" onclick="clickRoomCode(\'$1\')" title="클릭하여 방코드 입력">$1</span>');
+
+  [box1, box2].forEach(box => {
+    if (!box) return;
+    const div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.innerHTML = `<span class="chat-msg-sender" style="color:#7c6aff; font-weight:700;">${escapeHtml(sender)}</span><span class="chat-msg-content">${formatted}</span>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+function promoteRoomToGlobal() {
+  if (!roomId) return;
+  connectWS(() => {
+    wsSend({
+      action: 'global_chat',
+      sender: '📢 방장',
+      content: `🔥 [방 홍보] 방 번호 ${roomId} 마피아 게임 참가하실 분 어서 오세요! (방 번호 클릭 시 자동 입력)`
+    });
+  });
+  showToast(`🌐 로비 광장에 방 번호 [${roomId}]가 홍보되었습니다!`, 'success');
+}
+
+function sendWaitingGlobalChat() {
+  const senderInput = document.getElementById('waitingGlobalChatSender');
+  const input = document.getElementById('waitingGlobalChatInput');
+  const content = input.value.trim();
+  if (!content) return;
+
+  connectWS(() => {
+    wsSend({
+      action: 'global_chat',
+      sender: senderInput.value.trim() || '익명',
+      content: content
+    });
+  });
+  input.value = '';
+}
+
+function clickRoomCode(code) {
+  document.getElementById('joinCodeInput').value = code;
+  showToast(`방 번호 [${code}]가 입력되었습니다! 참가하기 버튼을 누르세요.`);
+  document.getElementById('joinCodeInput').focus();
+}
+
+function renderActiveRooms(rooms) {
+  const grid = document.getElementById('activeRoomsGrid');
+  const badge = document.getElementById('activeRoomCountBadge');
+  if (!grid) return;
+
+  const lobbyRooms = (rooms || []).filter(r => r.phase === 'lobby' || r.phase === 'LOBBY');
+  if (badge) badge.textContent = `${lobbyRooms.length}개 방 대기 중`;
+
+  if (lobbyRooms.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:24px; grid-column:1/-1;">현재 개설된 방이 없습니다. [방 만들기]를 눌러 첫 방 번호를 생성해보세요!</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  lobbyRooms.forEach(r => {
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg-input); border:2px solid rgba(124,106,255,0.35); border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; gap:10px; transition:all 0.2s;';
+    const cfg = r.config || {};
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:1.15rem; font-weight:800; color:#fff; background:var(--accent); padding:4px 12px; border-radius:8px;">🚪 방 번호: ${r.room_id}</span>
+        <span style="font-size:0.85rem; font-weight:700; color:#2ed573;">👥 ${r.player_count}/${r.min_players}명</span>
+      </div>
+      <div style="font-size:0.82rem; color:var(--text-secondary);">
+        🔪 마피아 ${cfg.mafia||1} / 💊 의사 ${cfg.doctor||1} / 🔍 경찰 ${cfg.police||1}
+      </div>
+      <button class="btn btn-primary btn-full" style="padding:10px; font-size:0.9rem; font-weight:700;" onclick="joinDirectRoom('${r.room_id}')">🚀 [${r.room_id}] 방 바로 참가하기</button>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function joinDirectRoom(roomId) {
+  document.getElementById('joinCodeInput').value = roomId;
+  requestRoomInfo();
+}
+
+function updateGameChat() {
+  const chatArea = document.getElementById('gameBottomChat');
+  const header = document.getElementById('gameChatHeader');
+  const inputRow = document.getElementById('gameChatInputRow');
+  const container = chatArea.querySelector('.chat-container');
+
+  container.classList.remove('mafia-chat');
+  header.classList.remove('mafia-header');
+  header.textContent = '💬 채팅';
+
+  if (!myAlive) {
+    header.textContent = '👻 사망자 유령 채팅방 (살아있는 사람에겐 안 보임)';
+    document.getElementById('gameChatInput').placeholder = '👻 사망자끼리 대화하기...';
+    inputRow.style.display = 'flex';
+  } else if (gamePhase === 'night' && myRole === 'mafia') {
+    container.classList.add('mafia-chat');
+    header.classList.add('mafia-header');
+    header.textContent = '🔪 마피아 비밀 채팅';
+    inputRow.style.display = 'flex';
+  } else if (gamePhase === 'discussion') {
+    inputRow.style.display = 'flex';
+  } else if (gamePhase === 'night') {
+    inputRow.style.display = 'none';
+  } else if (gamePhase === 'vote') {
+    inputRow.style.display = 'none';
+  } else {
+    inputRow.style.display = 'flex';
+  }
+}
+
+function sendGameChat() {
+  const input = document.getElementById('gameChatInput');
+  const val = input.value.trim();
+  if (!val) return;
+
+  if (!myAlive) {
+    wsSend({action: 'dead_chat', content: val});
+  } else if (gamePhase === 'night' && myRole === 'mafia') {
+    wsSend({action: 'mafia_chat', content: val});
+  } else {
+    wsSend({action: 'chat', content: val});
+  }
+  input.value = '';
+}
+
+function appendSystemChat(message) {
+  const box = document.getElementById('gameChatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg system-msg';
+  div.innerHTML = `<span class="chat-msg-sender" style="color:#7c6aff; font-weight:700;">📢 안내</span><span class="chat-msg-content">${escapeHtml(message)}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendDeadChat(character, content) {
+  const box = document.getElementById('gameChatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg dead-chat-msg';
+  div.innerHTML = `<span class="chat-msg-sender" style="color:#a55eea; font-weight:700;">👻 [사망자] ${character.emoji || ''} ${character.name || ''}</span><span class="chat-msg-content" style="color:#dcdde1;">${escapeHtml(content)}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendGameChat(sender, content, isMafia=false) {
+  const box = document.getElementById('gameChatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  const senderStyle = isMafia ? `color:${getComputedStyle(document.documentElement).getPropertyValue('--mafia-color')};` : '';
+  div.innerHTML = `<span class="chat-msg-sender" style="${senderStyle}">${sender}</span><span class="chat-msg-content">${escapeHtml(content)}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── Timer ──
+function startTimer(seconds) {
+  clearInterval(timerInterval);
+  timerRemaining = seconds;
+  timerTotal = seconds;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    if (timerRemaining <= 0) { clearInterval(timerInterval); timerRemaining = 0; }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const pct = timerTotal > 0 ? (timerRemaining / timerTotal) * 100 : 0;
+  const fill = document.getElementById('timerBarFill');
+  fill.style.width = pct + '%';
+  fill.classList.toggle('low', pct < 25);
+  document.getElementById('timerText').textContent = timerRemaining + '초';
+}
+
+// ── Role Badge ──
+function updateRoleBadge() {
+  const el = document.getElementById('myRoleBadge');
+  if (!myRole) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.className = 'my-role-badge ' + myRole;
+  el.textContent = myRoleDisplay || myRole;
+}
+
+function updateAliveStatus() {
+  const me = players.find(p => p.character_id === myCharacterId);
+  myAlive = me ? me.alive : true;
+  document.getElementById('spectatorBadge').style.display = myAlive ? 'none' : 'block';
+}
+
+
+
+// ── Role Reveal Modal ──
+function showRoleReveal(role, roleDisplay, mafiaAlliesArr) {
+  const emojiMap = {mafia:'🔪', doctor:'💊', police:'🔍', citizen:'👤'};
+  document.getElementById('roleRevealEmoji').textContent = emojiMap[role] || '❓';
+  document.getElementById('roleRevealTitle').textContent = `당신은 ${roleDisplay}입니다`;
+  let desc = '';
+  if (role === 'mafia' && mafiaAlliesArr && mafiaAlliesArr.length > 0) {
+    desc = '동료 마피아: ' + mafiaAlliesArr.map(a => `${a.emoji} ${a.name}`).join(', ');
+  } else if (role === 'doctor') {
+    desc = '매일 밤 한 명을 마피아로부터 보호할 수 있습니다.';
+  } else if (role === 'police') {
+    desc = '매일 밤 한 명의 정체를 조사할 수 있습니다.';
+  } else if (role === 'citizen') {
+    desc = '마피아를 찾아 투표로 추방하세요!';
+  } else if (role === 'mafia') {
+    desc = '밤마다 시민을 제거하세요. 들키지 마세요!';
+  }
+  document.getElementById('roleRevealDesc').textContent = desc;
+  document.getElementById('roleRevealModal').classList.add('show');
+}
+function closeRoleReveal() { document.getElementById('roleRevealModal').classList.remove('show'); }
+
+// ── Police Result Modal ──
+function showPoliceResult(msg) {
+  document.getElementById('policeResultText').textContent = msg;
+  document.getElementById('policeResultModal').classList.add('show');
+}
+function closePoliceResult() { document.getElementById('policeResultModal').classList.remove('show'); }
+
+// ── Game Over ──
+function showGameOver(winner, message, revealedPlayers) {
+  const titleEl = document.getElementById('gameOverTitle');
+  titleEl.textContent = message;
+  titleEl.style.color = winner === 'citizen' ? '#2ed573' : '#ff4757';
+  document.getElementById('gameOverMsg').textContent = winner === 'citizen' ? '시민 팀이 모든 마피아를 찾아냈습니다!' : '마피아가 시민을 장악했습니다!';
+
+  const grid = document.getElementById('gameOverPlayers');
+  grid.innerHTML = '';
+  (revealedPlayers||[]).forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'gameover-player-card';
+    const ch = getCharacter(p.character_id) || {emoji:'❓', name: p.character_id};
+    const roleClass = p.role || 'citizen';
+    div.innerHTML = `
+      <span class="char-emoji">${p.emoji || ch.emoji}</span>
+      <span class="char-name">${p.name || ch.name}${!p.alive ? ' ☠️':''}</span>
+      <span class="role-tag ${roleClass}">${p.role_display || p.role || '시민'}</span>
+    `;
+    grid.appendChild(div);
+  });
+  document.getElementById('gameOverOverlay').classList.add('show');
+}
+
+function backToLobby() {
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  document.getElementById('myRoleBadge').style.display = 'none';
+  document.getElementById('spectatorBadge').style.display = 'none';
+  // Reset state
+  myRole = null; myRoleDisplay = null; gamePhase = null; nightActionType = null;
+  nightTargets = []; selectedTarget = null; players = []; myAlive = true; mafiaAllies = [];
+  clearInterval(timerInterval);
+  document.getElementById('gameChatMessages').innerHTML = '';
+  document.getElementById('lobbyChatMessages').innerHTML = '';
+  if (ws) { ws.close(); ws = null; }
+  showScreen('lobbyScreen');
+}
+
+// ══════════════════════════════════════════════
+//  WEBSOCKET
+// ══════════════════════════════════════════════
+function connectWS(onOpen) {
+  if (ws && ws.readyState === WebSocket.OPEN) { if (onOpen) onOpen(); return; }
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => {
+    document.getElementById('reconnectBanner').style.display = 'none';
+    if (onOpen) onOpen();
+  };
+  ws.onmessage = (e) => {
+    let data;
+    try { data = JSON.parse(e.data); } catch { return; }
+    handleMessage(data);
+  };
+  ws.onclose = () => {
+    document.getElementById('reconnectBanner').style.display = 'block';
+    setTimeout(() => connectWS(), 2000);
+  };
+  ws.onerror = () => {};
+}
+
+function wsSend(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  } else {
+    showToast('서버에 연결되지 않았습니다.');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  MESSAGE HANDLER
+// ══════════════════════════════════════════════
+function handleMessage(data) {
+  switch (data.type) {
+    case 'global_chat':
+      appendGlobalChat(data.sender, data.content);
+      if (data.user_count !== undefined) {
+        const b1 = document.getElementById('globalUserCountBadge');
+        const b2 = document.getElementById('waitingGlobalUserCountBadge');
+        if (b1) b1.textContent = `🟢 접속자 ${data.user_count}명`;
+        if (b2) b2.textContent = `🟢 접속자 ${data.user_count}명`;
+      }
+      break;
+
+    case 'lobby_count': {
+      const badge1 = document.getElementById('globalUserCountBadge');
+      const badge2 = document.getElementById('waitingGlobalUserCountBadge');
+      if (badge1) badge1.textContent = `🟢 접속자 ${data.user_count}명`;
+      if (badge2) badge2.textContent = `🟢 접속자 ${data.user_count}명`;
+      break;
+    }
+
+    case 'room_list':
+      renderActiveRooms(data.rooms);
+      break;
+
+    case 'room_info':
+      roomId = data.room_id;
+      takenCharacters = data.taken_characters || [];
+      roomConfig = data.config;
+      goToCharSelect('join');
+      break;
+
+    case 'room_created':
+      roomId = data.room_id;
+      isHost = data.is_host;
+      roomConfig = data.config;
+      players = data.players || [];
+      minPlayers = data.min_players || 4;
+      renderWaitingRoom();
+      showScreen('waitingScreen');
+      break;
+
+    case 'room_joined':
+      roomId = data.room_id;
+      isHost = data.is_host;
+      roomConfig = data.config;
+      players = data.players || [];
+      minPlayers = data.min_players || 4;
+      renderWaitingRoom();
+      showScreen('waitingScreen');
+      break;
+
+    case 'player_joined':
+      players.push(data.player);
+      minPlayers = data.min_players || minPlayers;
+      renderWaitingRoom();
+      showBanner(`${data.player.emoji} ${data.player.name} 님이 입장했습니다!`, 2500);
+      break;
+
+    case 'player_left':
+      players = players.filter(p => p.character_id !== data.character_id);
+      minPlayers = data.min_players || minPlayers;
+      if (currentScreen === 'waiting') {
+        renderWaitingRoom();
+      } else {
+        renderGamePlayers();
+      }
+      const leftChar = getCharacter(data.character_id);
+      showBanner(`${leftChar ? leftChar.emoji : ''} ${leftChar ? leftChar.name : data.character_id} 님이 나갔습니다.`, 2500);
+      break;
+
+    case 'error':
+      showToast(data.message || '오류가 발생했습니다.');
+      break;
+
+    case 'game_started':
+      myRole = data.role;
+      myRoleDisplay = data.role_display;
+      mafiaAllies = data.mafia_allies || [];
+      players = data.players || players;
+      myAlive = true;
+      gamePhase = null;
+      document.getElementById('gameChatMessages').innerHTML = '';
+      showScreen('gameScreen');
+      renderGameScreen();
+      showRoleReveal(myRole, myRoleDisplay, mafiaAllies);
+      break;
+
+    case 'phase_change':
+      gamePhase = data.phase;
+      nightActionType = null;
+      nightTargets = data.targets || [];
+      document.getElementById('roundBadge').textContent = `라운드 ${data.round || 1}`;
+      if (data.timer) startTimer(data.timer);
+      renderGameScreen();
+      if (data.message) showBanner(data.message, 3500);
+      break;
+
+    case 'night_action_prompt':
+      nightActionType = data.action_type;
+      nightTargets = data.targets || [];
+      renderGamePlayers();
+      updateGameChat();
+      break;
+
+    case 'mafia_chat':
+      appendGameChat(data.from, data.message, true);
+      break;
+
+    case 'police_result':
+      showPoliceResult(data.message);
+      break;
+
+    case 'night_result':
+      if (data.players) {
+        players = data.players;
+        updateAliveStatus();
+      }
+      if (data.message) showBanner(data.message, 5000);
+      renderGamePlayers();
+      break;
+
+    case 'system_chat':
+      appendSystemChat(data.message);
+      break;
+
+    case 'dead_chat':
+      appendDeadChat(data.character || {}, data.content);
+      break;
+
+    case 'chat':
+      if (currentScreen === 'waiting') {
+        const ch = data.character || {};
+        appendLobbyChat(`${ch.emoji || ''} ${ch.name || ''}`, data.content);
+      } else {
+        const ch = data.character || {};
+        appendGameChat(`${ch.emoji || ''} ${ch.name || ''}`, data.content);
+      }
+      break;
+
+    case 'vote_cast':
+      showBanner(`${data.voter.emoji} ${data.voter.name}이(가) 투표했습니다 (${data.vote_count}/${data.total_alive})`, 2000);
+      break;
+
+    case 'vote_result':
+      if (data.players) {
+        players = data.players;
+        updateAliveStatus();
+      }
+      if (data.message) showBanner(data.message, 5000);
+      renderGamePlayers();
+      break;
+
+    case 'game_over':
+      clearInterval(timerInterval);
+      showGameOver(data.winner, data.message, data.players);
+      break;
+
+    default:
+      console.log('Unknown message type:', data.type, data);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Join code input: filter to digits only ──
+document.getElementById('joinCodeInput').addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+});
+
+// ── Keyboard shortcut: Enter on join code ──
+document.getElementById('joinCodeInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') requestRoomInfo();
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderLobbyPlayers();
+  generateReservedRoomId();
+  connectWS();
+});
+</script>
+</body>
+</html>

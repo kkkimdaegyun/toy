@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>퇴사자 사이버 묘지 🪦</title>
+  <style>
+    /* ===================== 테마 변수 ===================== */
+    :root {
+      --stone:     #2a2f36;
+      --stone-2:   #1c2127;
+      --stone-top: #3a414b;
+      --text:      #eef2f5;
+      --text-dim:  #c2cbcf;
+      --accent:    #ffe6a8;
+      --tag-bg:    rgba(255, 240, 200, 0.14);
+      --tag-text:  #ffeec2;
+      --danger:    #b3261e;
+      --danger-2:  #e23b30;
+      --card-w:    200px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans KR", "Apple SD Gothic Neo", -apple-system,
+                   BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      /* 화창한 낮 하늘 — 더 좋은 곳으로 떠나는 날의 긍정적인 햇살 */
+      background:
+        linear-gradient(180deg,
+          #3f97df 0%, #6fbceb 30%, #a4d8f4 58%, #d7eef6 82%, #eef7e6 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ☀️ 해 — 위치/표시는 JS가 실제 시간에 맞춰 갱신 */
+    .sun {
+      position: fixed;
+      top: 14%; left: 78%;
+      width: 116px; height: 116px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 45%,
+        #fff7e0 0%, #ffd86b 50%, #ffb13a 78%, #f59a2e 100%);
+      box-shadow:
+        0 0 80px 26px rgba(255, 235, 150, 0.55),
+        0 0 190px 80px rgba(255, 210, 90, 0.28);
+      z-index: 0; pointer-events: none;
+      transition: top 2s linear, left 2s linear, opacity 4s ease;
+    }
+
+    /* 🌙 달 — 밤에 JS가 표시/이동 */
+    .moon {
+      position: fixed;
+      top: 14%; left: 22%;
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 64% 30%, rgba(0,0,0,0.06) 0 6px, transparent 7px),
+        radial-gradient(circle at 40% 62%, rgba(0,0,0,0.05) 0 5px, transparent 6px),
+        radial-gradient(circle at 56% 72%, rgba(0,0,0,0.04) 0 4px, transparent 5px),
+        radial-gradient(circle at 38% 38%, #fdfcf3, #e8e7d6 55%, #c9c8b6 100%);
+      box-shadow: 0 0 44px 14px rgba(225,232,255,0.35);
+      opacity: 0; z-index: 0; pointer-events: none;
+      transition: top 2s linear, left 2s linear, opacity 4s ease;
+    }
+
+    /* ✨ 별 — 밤일수록 진하게 (컨테이너 opacity 는 JS) */
+    .stars {
+      position: fixed; top: 0; left: 0; width: 100%; height: 60%;
+      z-index: 0; pointer-events: none; opacity: 0; transition: opacity 4s ease;
+    }
+    .star {
+      position: absolute; background: #fff; border-radius: 50%;
+      box-shadow: 0 0 4px 1px rgba(255,255,255,0.55);
+      animation: twinkle 3.5s ease-in-out infinite;
+    }
+    @keyframes twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+    /* ☁️ 두둥실 떠가는 뭉게구름 */
+    .cloud {
+      position: fixed; z-index: 0; pointer-events: none;
+      background: #ffffff; border-radius: 100px; opacity: 0.92;
+      box-shadow: 0 10px 26px rgba(120, 150, 180, 0.18);
+    }
+    .cloud::before, .cloud::after {
+      content: ""; position: absolute; background: #ffffff; border-radius: 50%;
+    }
+    .cloud.c1 { top: 14%; left: -160px; width: 140px; height: 42px; animation: drift1 60s linear infinite; }
+    .cloud.c1::before { width: 64px; height: 64px; top: -26px; left: 26px; }
+    .cloud.c1::after  { width: 46px; height: 46px; top: -16px; left: 78px; }
+    .cloud.c2 { top: 26%; left: -220px; width: 100px; height: 32px; opacity: 0.8; animation: drift2 90s linear infinite; }
+    .cloud.c2::before { width: 48px; height: 48px; top: -20px; left: 18px; }
+    .cloud.c2::after  { width: 36px; height: 36px; top: -12px; left: 56px; }
+    @keyframes drift1 { from { transform: translateX(0); } to { transform: translateX(calc(100vw + 320px)); } }
+    @keyframes drift2 { from { transform: translateX(0); } to { transform: translateX(calc(100vw + 380px)); } }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 20px 110px;
+    }
+
+    /* ===================== 헤더 ===================== */
+    header { text-align: center; margin-bottom: 10px; }
+    header h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      margin: 0 0 10px;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.35);
+    }
+    header p {
+      color: #f2f8fc; margin: 0; font-size: 15px; line-height: 1.6;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.45);
+    }
+    .count-line {
+      margin-top: 12px; color: #ffffff; font-weight: 600; font-size: 14px;
+      letter-spacing: 1px; text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+    }
+
+    /* ===================== +/- 툴바 ===================== */
+    .toolbar {
+      display: flex; justify-content: center; align-items: flex-start;
+      gap: 40px; margin: 22px 0 6px;
+    }
+    .tool { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .tool .cap { font-size: 12px; color: #ffffff; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
+    .circle-btn {
+      width: 56px; height: 56px; border-radius: 50%; border: none;
+      font-size: 30px; font-weight: 700; line-height: 1; cursor: pointer; color: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    .circle-btn:active { transform: translateY(2px); }
+    .circle-btn.add    { background: linear-gradient(180deg, #4a8a3f, #356b2c); }
+    .circle-btn.remove { background: linear-gradient(180deg, #6a727c, #4b525b); }
+    .circle-btn.add:hover, .circle-btn.remove:hover { filter: brightness(1.1); }
+    .circle-btn.remove.active {
+      background: linear-gradient(180deg, var(--danger-2), var(--danger));
+      box-shadow: 0 0 0 4px rgba(226,59,48,0.25), 0 8px 20px rgba(179,38,30,0.4);
+    }
+
+    /* ===================== 들판 (정면 뷰) ===================== */
+    .scene {
+      position: relative;
+      left: 50%; transform: translateX(-50%);
+      width: 100vw;                         /* 화면 가득 — 넓은 들판 */
+      height: clamp(620px, 80vh, 920px);
+      margin-top: 16px;
+      overflow: hidden;
+      touch-action: none;                   /* 드래그 중 스크롤 방지 */
+    }
+
+    /* 지평선 너머 먼 언덕 */
+    .hills {
+      position: absolute; left: 0; bottom: 70%;
+      width: 100%; height: 130px; z-index: 0;
+      filter: blur(0.4px);
+    }
+
+    /* 원근감 있는 들판 바닥 (소실점 = 중앙 지평선) */
+    .field-ground {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 70%; z-index: 1;
+      background:
+        repeating-conic-gradient(from 0deg at 50% 0%,
+          rgba(255,255,255,0.07) 0deg 1.3deg,
+          rgba(0,0,0,0.035)      1.3deg 5.4deg),
+        linear-gradient(180deg,
+          #cfe7a0 0%, #a7d566 12%, #84c54a 40%, #66ab38 72%, #54922e 100%);
+      box-shadow: inset 0 16px 30px rgba(0,0,0,0.08);
+    }
+
+    /* 지평선의 대기 원근(하늘빛 아지랑이) */
+    .haze {
+      position: absolute; left: 0; right: 0; bottom: 70%;
+      height: 70px; z-index: 2; pointer-events: none;
+      background: linear-gradient(180deg, rgba(238,247,230,0.85), rgba(238,247,230,0));
+    }
+
+    /* 뾰족뾰족 잔디 — 지평선 풀잎(작게) / 앞쪽(가까이) 풀잎이 화면 아래를 채움 */
+    .grass-horizon { position: absolute; left: 0; bottom: 70%; width: 100%; height: 22px; z-index: 3; pointer-events: none; display: block; }
+    .grass-front   { position: absolute; left: 0; bottom: 0;   width: 100%; height: 88px; z-index: 3000; pointer-events: none; display: block; }
+
+    .empty {
+      position: absolute; left: 0; right: 0; bottom: 14%;
+      z-index: 50; text-align: center; color: #2e3a22; font-size: 16px; line-height: 1.9;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35); padding: 20px;
+    }
+
+    /* 묘비 한 기 — 들판 위에 '서 있음' (foot = 바닥 접점) */
+    .tomb {
+      position: absolute;
+      width: var(--card-w);
+      background: linear-gradient(180deg, var(--stone-top), var(--stone) 30%, var(--stone-2));
+      border-radius: 110px 110px 12px 12px;
+      padding: 28px 18px 20px;
+      border: 1px solid #444b55;
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.05),
+        inset 0 -26px 36px rgba(0,0,0,0.35),
+        0 14px 22px rgba(0,0,0,0.45);
+      text-align: center;
+      cursor: grab; user-select: none; touch-action: none;
+      transform-origin: bottom center;      /* 발치를 축으로 크기 조절 */
+      animation: fadein .4s ease both;
+    }
+    .tomb.dragging { cursor: grabbing; filter: brightness(1.06); }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+    /* 묘비 발치의 잔디 그림자 */
+    .tomb::after {
+      content: ""; position: absolute; left: 50%; bottom: -10px;
+      transform: translateX(-50%); width: 92%; height: 18px;
+      background: radial-gradient(ellipse at center, rgba(20,50,15,0.45), transparent 72%);
+      filter: blur(1px); pointer-events: none;
+    }
+
+    .rip { font-size: 12px; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+    .cross { font-size: 20px; opacity: .85; display: block; margin-bottom: 4px; }
+    .tomb .name { font-size: 20px; font-weight: 700; margin: 2px 0; color: #f1f5f8; }
+    .tomb .job { font-size: 13px; color: var(--accent); margin-bottom: 12px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 14px; min-height: 4px; }
+    .tag {
+      font-size: 12px; color: var(--tag-text); background: var(--tag-bg);
+      border: 1px solid rgba(255,235,180,0.22); padding: 3px 9px; border-radius: 999px;
+    }
+    .epitaph {
+      font-style: italic; color: var(--text); font-size: 14px; line-height: 1.55;
+      border-top: 1px dashed #4a525c; padding-top: 11px; margin-top: 4px; min-height: 18px;
+    }
+    .epitaph::before { content: "“"; opacity: .5; }
+    .epitaph::after  { content: "”"; opacity: .5; }
+    .date { margin-top: 11px; font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+    .editor { margin-top: 6px; font-size: 11px; color: #a9c0cc; letter-spacing: .3px; }
+
+    /* 수정 버튼 (연필) — 평소엔 숨기고, 묘비에 마우스를 올리면 흰 원 + 검은 연필로 또렷하게 */
+    .tomb-edit {
+      position: absolute; top: 10px; left: 10px;
+      width: 22px; height: 22px; border-radius: 50%; border: none;
+      background: #ffffff; color: #111; font-size: 12px; line-height: 1;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      opacity: 0;                                    /* 평소엔 숨김 */
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: opacity .15s ease, transform .08s ease;
+    }
+    .tomb:hover .tomb-edit { opacity: 1; }           /* 묘비에 마우스 올리면 나타남 */
+    .tomb-edit:hover { transform: scale(1.12); }
+    @media (hover: none) { .tomb-edit { opacity: 0.65; } }  /* 터치 기기는 항상 보이게 */
+    body.delete-mode .tomb-edit { display: none; }   /* 파묘 모드에선 수정 버튼 숨김 */
+
+    /* 파묘(삭제) 배지 — 파묘 모드일 때만 노출 */
+    .tomb-del {
+      display: none; position: absolute; top: 10px; right: 10px;
+      width: 26px; height: 26px; border-radius: 50%; border: none;
+      background: var(--danger-2); color: #fff; font-size: 20px; line-height: 1;
+      align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    body.delete-mode .tomb { cursor: pointer; animation: pulseRed 1.1s ease-in-out infinite; }
+    body.delete-mode .tomb-del { display: flex; }
+    body.delete-mode .tomb:hover { outline: 2px solid rgba(226,59,48,0.7); }
+    @keyframes pulseRed { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.16); } }
+
+    /* ===================== made by 크레딧 ===================== */
+    .made-by { text-align: center; margin-top: 40px; font-size: 14px; font-style: italic; letter-spacing: .3px; color: #2f3a26; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+    /* ===================== 모달 ===================== */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 440px;
+      background: linear-gradient(180deg, #11151a, #0c1014);
+      border: 1px solid #2a313b; border-radius: 16px; padding: 26px 24px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6); animation: fadein .25s ease both; color: var(--text);
+    }
+    .modal h2 { margin: 0 0 4px; font-size: 20px; }
+    .modal .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%; background: #0a0d11; border: 1px solid #2c333d; border-radius: 8px;
+      color: var(--text); padding: 10px 12px; font-size: 14px; font-family: inherit; resize: vertical;
+    }
+    .field input:focus, .field textarea:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,230,168,0.14);
+    }
+    .field .hint { font-size: 11px; color: #707a86; margin-top: 4px; }
+    .icon-picker { display: flex; gap: 10px; }
+    .icon-opt {
+      flex: 1; padding: 12px 0; font-size: 24px; line-height: 1; cursor: pointer;
+      background: #0a0d11; border: 1px solid #2c333d; border-radius: 10px; color: #fff;
+      transition: border-color .15s, background .15s, transform .08s;
+    }
+    .icon-opt:hover { border-color: #4a525e; }
+    .icon-opt.selected {
+      border-color: var(--accent); background: rgba(255,230,168,0.12);
+      box-shadow: 0 0 0 3px rgba(255,230,168,0.14);
+    }
+    .icon-opt:active { transform: translateY(1px); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; border-radius: 10px; font-size: 15px; font-weight: 600; padding: 12px; cursor: pointer; border: none; }
+    .btn-primary { background: linear-gradient(180deg, #4a8a3f, #356b2c); color: #fff; }
+    .btn-ghost { background: transparent; border: 1px solid #353d47; color: var(--text-dim); }
+    .btn-ghost:hover { color: var(--text); border-color: #4a525e; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1b2129; border: 1px solid #2f3742; color: var(--text);
+      padding: 12px 18px; border-radius: 10px; font-size: 14px;
+      opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease; z-index: 250;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="sun" id="sun"></div>
+  <div class="moon" id="moon"></div>
+  <div class="stars" id="stars"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+
+  <div class="wrap">
+    <header>
+      <h1>🪦 퇴사자 사이버 묘지</h1>
+      <p>
+        먼저 더 좋은 곳으로 떠난 동료들의 양지바른 안식처입니다. ☀️<br />
+        묘비를 <b>드래그</b>해 옮길 수 있어요 (위로 = 멀리, 아래로 = 가까이). 새로운 시작을 응원하며!
+      </p>
+      <div class="count-line" id="countLine">묘비를 세는 중...</div>
+    </header>
+
+    <!-- +/- 툴바 -->
+    <div class="toolbar">
+      <div class="tool">
+        <button class="circle-btn add" id="addBtn" title="묘비 추가">＋</button>
+        <span class="cap">묘비 세우기</span>
+      </div>
+      <div class="tool">
+        <button class="circle-btn remove" id="removeBtn" title="묘비 없애기 (파묘 모드)">－</button>
+        <span class="cap">파묘하기</span>
+      </div>
+    </div>
+
+    <!-- 들판 (정면 뷰) -->
+    <main class="scene" id="scene">
+      <svg class="hills" viewBox="0 0 1200 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 130 L0 78 Q150 36 330 64 Q520 94 700 58 Q900 22 1050 62 Q1130 82 1200 66 L1200 130 Z" fill="#7fb95b"/>
+        <path d="M0 130 L0 96 Q210 64 440 88 Q660 110 880 84 Q1050 64 1200 92 L1200 130 Z" fill="#6fab4e"/>
+      </svg>
+      <div class="field-ground"></div>
+      <div class="haze"></div>
+      <svg class="grass-horizon" width="100%" height="22" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="blades-h" patternUnits="userSpaceOnUse" width="34" height="22">
+            <path d="M0 22 L4 4 L8 22 Z"    fill="#5e8f3f"/>
+            <path d="M7 22 L12 1 L17 22 Z"  fill="#6fa84e"/>
+            <path d="M15 22 L18 8 L22 22 Z" fill="#4f7d33"/>
+            <path d="M22 22 L28 3 L34 22 Z" fill="#67a046"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="22" fill="url(#blades-h)"/>
+      </svg>
+      <!-- 묘비들이 여기에 절대배치로 렌더링됨 -->
+      <svg class="grass-front" width="100%" height="88" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="blades-f" patternUnits="userSpaceOnUse" width="46" height="88">
+            <rect y="68" width="46" height="20" fill="#2c4d1c"/>
+            <path d="M-2 88 L4 26 L9 88 Z"   fill="#2f5320"/>
+            <path d="M6 88 L13 6 L19 88 Z"   fill="#46802a"/>
+            <path d="M15 88 L19 40 L24 88 Z" fill="#39691f"/>
+            <path d="M22 88 L30 16 L37 88 Z" fill="#56993a"/>
+            <path d="M33 88 L37 2 L42 88 Z"  fill="#2c4d1c"/>
+            <path d="M40 88 L46 30 L52 88 Z" fill="#4e8a2a"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="88" fill="url(#blades-f)"/>
+      </svg>
+    </main>
+
+    <div class="made-by" id="madeBy"></div>
+  </div>
+
+  <!-- 등록 모달 -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h2 id="modalTitle">새 묘비를 새깁니다</h2>
+      <div class="sub">떠난 이의 정보를 정성껏 새겨주세요.</div>
+      <form id="graveForm">
+        <div class="field">
+          <label>묘비 아이콘</label>
+          <div class="icon-picker" id="iconPicker">
+            <button type="button" class="icon-opt" data-icon="🌱" title="새싹 — 새출발">🌱</button>
+            <button type="button" class="icon-opt" data-icon="🕊️" title="비둘기 — 자유">🕊️</button>
+            <button type="button" class="icon-opt" data-icon="✝" title="십자가 — 추모">✝</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="name">이름 / 닉네임 *</label>
+          <input id="name" name="name" maxlength="30" placeholder="예: 김퇴사 / 야근요정" required />
+        </div>
+        <div class="field">
+          <label for="job">직무 *</label>
+          <input id="job" name="job" maxlength="40" placeholder="예: 프론트엔드 개발자 / 기획자" required />
+        </div>
+        <div class="field">
+          <label for="resign_date">퇴사일 *</label>
+          <input id="resign_date" name="resign_date" type="date" required />
+        </div>
+        <div class="field">
+          <label for="tags">특징 / 키워드</label>
+          <input id="tags" name="tags" maxlength="200" placeholder="#너무 착해 #회의시간 요정 #항상 야근" />
+          <div class="hint">#로 구분해서 입력하세요. 한 태그 안에 띄어쓰기를 써도 됩니다.</div>
+        </div>
+        <div class="field">
+          <label for="epitaph">묘비명 / 남긴 한 줄 평</label>
+          <textarea id="epitaph" name="epitaph" rows="2" maxlength="200"
+                    placeholder="예: 더 좋은 곳으로 떠났습니다 (연봉 1.5배)"></textarea>
+        </div>
+        <div class="field">
+          <label for="editor">기록한 사람 (수정자)</label>
+          <input id="editor" name="editor" maxlength="30" placeholder="예: 남은자 김대균" />
+          <div class="hint">이 묘비를 세우거나 수정한 사람의 이름이에요.</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelBtn">취소</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">묘비 세우기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = "/api/graves";
+    const $ = (sel) => document.querySelector(sel);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    // 묘비 위치는 브라우저에 저장 (foot 기준 좌표). 뷰가 바뀌어 v3 로 리셋.
+    const POS_KEY = "cg-positions-v4";
+    function loadPositions() {
+      try { return JSON.parse(localStorage.getItem(POS_KEY)) || {}; }
+      catch (e) { return {}; }
+    }
+    let positions = loadPositions();
+    function savePositions() { localStorage.setItem(POS_KEY, JSON.stringify(positions)); }
+    function setPos(id, x, y) { positions[id] = { x, y }; savePositions(); }
+
+    let deleteMode = false;
+    let gravesById = {};      // id -> 묘비 데이터 (수정 모달 채우기용)
+    let editingId = null;     // 수정 중인 묘비 id (null 이면 새로 등록)
+    let selectedIcon = "🌱";  // 모달에서 고른 묘비 아이콘
+
+    // -------------------- 유틸 --------------------
+    function escapeHtml(str) {
+      return (str ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+    function parseTags(raw) {
+      if (!raw) return [];
+      // '#' 기준으로만 분리 — 한 태그 안에 띄어쓰기를 써도 그대로 유지된다.
+      return raw.split("#").map((t) => t.trim()).filter(Boolean).map((t) => "#" + t);
+    }
+    function showToast(msg) {
+      const t = $("#toast");
+      t.textContent = msg; t.classList.add("show");
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove("show"), 2400);
+    }
+
+    // -------------------- 들판 좌표/원근 --------------------
+    // 들판은 지평선(top)에서 화면 앞(bottom)으로 이어진다.
+    // foot.y 가 작을수록(=지평선 근처) 멀고 작게, 클수록 가깝고 크게 보인다.
+    function fieldMetrics() {
+      const scene = $("#scene");
+      const H = scene.clientHeight, W = scene.clientWidth;
+      return { W, H, top: H * 0.30, bottom: H - 92 };
+    }
+    function depthScale(footY, m) {
+      const t = clamp((footY - m.top) / (m.bottom - m.top), 0, 1);
+      // 화면(들판) 너비에 비례한 전체 크기 보정 — 좁은 화면에선 묘비가 작아짐
+      const sizeFactor = clamp(m.W / 1000, 0.6, 1.05);
+      return lerp(0.5, 1.12, t) * sizeFactor;
+    }
+    function placeTomb(el, footX, footY, m) {
+      const s = depthScale(footY, m);
+      el.style.left = footX + "px";
+      el.style.top = footY + "px";
+      el.style.transform = `translate(-50%, -100%) scale(${s.toFixed(3)})`;
+      el.style.zIndex = String(1000 + Math.round(footY)); // 가까울수록(아래) 위에 그림
+    }
+
+    // -------------------- 목록 렌더링 --------------------
+    async function loadGraves() {
+      let graves = [];
+      try {
+        graves = await fetch(API).then((r) => r.json());
+      } catch (e) {
+        $("#countLine").textContent = "묘지에 접근할 수 없습니다 (서버가 잠들었나요?)";
+        return;
+      }
+
+      const scene = $("#scene");
+      $("#countLine").textContent =
+        graves.length > 0
+          ? `이 들판에 ${graves.length}명의 영혼이 잠들어 있습니다.`
+          : "아직 아무도 잠들지 않았습니다.";
+
+      gravesById = {};
+      graves.forEach((g) => { gravesById[g.id] = g; });
+
+      scene.querySelectorAll(".tomb, .empty").forEach((el) => el.remove());
+
+      if (graves.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.innerHTML =
+          "아직 비어 있는 들판입니다.<br />＋ 버튼으로 첫 번째 묘비를 세워 주세요.<br />(당신은 부디 마지막이길)";
+        scene.appendChild(empty);
+        return;
+      }
+
+      graves.forEach((g) => scene.insertAdjacentHTML("beforeend", tombHTML(g)));
+      layout(graves);
+      bindTombs();
+    }
+
+    async function loadCredits() {
+      let names = [];
+      try { names = await fetch("/api/credits").then((r) => r.json()); } catch (e) {}
+      const el = $("#madeBy");
+      el.textContent = (names && names.length) ? ("made by " + names.join(", ")) : "";
+    }
+
+    function tombHTML(g) {
+      const tags = parseTags(g.tags)
+        .map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+      const editor = g.editor
+        ? `<div class="editor">✍ 기록: ${escapeHtml(g.editor)}</div>` : "";
+      return `
+        <article class="tomb" data-id="${g.id}">
+          <button class="tomb-edit" title="수정">✎</button>
+          <button class="tomb-del" title="파묘 (삭제)">−</button>
+          <span class="cross">${escapeHtml(g.icon || "✝")}</span>
+          <div class="rip">Resign In Peace</div>
+          <div class="name">${escapeHtml(g.name)}</div>
+          <div class="job">${escapeHtml(g.job)}</div>
+          <div class="tags">${tags}</div>
+          <div class="epitaph">${escapeHtml(g.epitaph || "말없이 떠났다.")}</div>
+          <div class="date">⚰️ ${escapeHtml(g.resign_date)}</div>
+          ${editor}
+        </article>`;
+    }
+
+    // 저장 위치가 있으면 그대로, 없으면 들판에 원근감 있게 흩뿌려 배치
+    function layout(graves) {
+      const m = fieldMetrics();
+      const per = clamp(Math.floor(m.W / 220), 2, 6);
+      const rows = Math.max(1, Math.ceil(graves.length / per));
+
+      graves.forEach((g, i) => {
+        const el = $("#scene").querySelector(`.tomb[data-id="${g.id}"]`);
+        if (!el) return;
+        let p = positions[g.id];
+        if (!p) {
+          const row = Math.floor(i / per);
+          const inRow = Math.min(per, graves.length - row * per);
+          const col = i % per;
+          const rowT = rows <= 1 ? 0.72 : row / (rows - 1); // 0 뒤 .. 1 앞
+          const footY = (m.top + 26) + rowT * (m.bottom - (m.top + 26));
+          const depth = (footY - m.top) / (m.bottom - m.top);
+          const margin = lerp(m.W * 0.30, m.W * 0.05, depth);   // 뒤로 갈수록 폭이 좁아짐(소실점)
+          const span = m.W - 2 * margin;
+          const fx = inRow === 1 ? m.W / 2 : margin + (col / (inRow - 1)) * span;
+          p = { x: fx + (Math.random() * 24 - 12), y: footY + (Math.random() * 10 - 5) };
+          setPos(g.id, p.x, p.y);
+        }
+        placeTomb(el, p.x, p.y, m);
+      });
+    }
+
+    // -------------------- 드래그 이동 --------------------
+    let drag = null;
+    function bindTombs() {
+      document.querySelectorAll(".tomb").forEach((el) => {
+        el.addEventListener("pointerdown", onPointerDown);
+        el.addEventListener("click", () => { if (deleteMode) removeGrave(el.dataset.id); });
+        const editBtn = el.querySelector(".tomb-edit");
+        if (editBtn) {
+          editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openEditModal(gravesById[el.dataset.id]);
+          });
+        }
+      });
+    }
+
+    function onPointerDown(e) {
+      if (deleteMode) return;             // 파묘 모드에선 드래그 대신 클릭=삭제
+      if (e.target.closest(".tomb-edit") || e.target.closest(".tomb-del")) return; // 버튼은 드래그 X
+      const el = e.currentTarget;
+      const rect = el.getBoundingClientRect();
+      const footScreenX = rect.left + rect.width / 2;
+      const footScreenY = rect.bottom;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("dragging");
+      el.style.zIndex = "9000";
+      drag = { el, id: el.dataset.id, dx: e.clientX - footScreenX, dy: e.clientY - footScreenY };
+      e.preventDefault();
+    }
+
+    window.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const scene = $("#scene");
+      const sr = scene.getBoundingClientRect();
+      const m = fieldMetrics();
+      let footY = clamp(e.clientY - drag.dy - sr.top, m.top + 6, m.bottom);
+      const s = depthScale(footY, m);
+      const half = (200 * s) / 2;
+      let footX = clamp(e.clientX - drag.dx - sr.left, half, m.W - half);
+      drag.el.style.left = footX + "px";
+      drag.el.style.top = footY + "px";
+      drag.el.style.transform = `translate(-50%, -100%) scale(${s.toFixed(3)})`;
+    });
+
+    window.addEventListener("pointerup", () => {
+      if (!drag) return;
+      const x = parseFloat(drag.el.style.left), y = parseFloat(drag.el.style.top);
+      setPos(drag.id, x, y);
+      drag.el.classList.remove("dragging");
+      drag.el.style.zIndex = String(1000 + Math.round(y));
+      drag = null;
+    });
+
+    // 창 크기가 바뀌면 비율 유지하며 재배치
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const m = fieldMetrics();
+        document.querySelectorAll(".tomb").forEach((el) => {
+          const p = positions[el.dataset.id];
+          if (p) placeTomb(el, clamp(p.x, 20, m.W - 20), clamp(p.y, m.top + 6, m.bottom), m);
+        });
+      }, 150);
+    });
+
+    // -------------------- 파묘(삭제) --------------------
+    async function removeGrave(id) {
+      if (!confirm("이 묘비를 파묘(삭제)하시겠습니까?")) return;
+      try {
+        await fetch(`${API}/${id}`, { method: "DELETE" });
+        delete positions[id]; savePositions();
+        showToast("묘비를 철거했습니다.");
+        loadGraves();
+      } catch (e) {
+        showToast("삭제에 실패했습니다.");
+      }
+    }
+
+    $("#removeBtn").addEventListener("click", () => {
+      deleteMode = !deleteMode;
+      document.body.classList.toggle("delete-mode", deleteMode);
+      $("#removeBtn").classList.toggle("active", deleteMode);
+      showToast(deleteMode ? "파묘 모드: 없앨 묘비를 클릭하세요 🪦" : "파묘 모드를 종료했습니다.");
+    });
+
+    // -------------------- 모달 (추가 / 수정) --------------------
+    const backdrop = $("#modalBackdrop");
+
+    const ICONS = ["🌱", "🕊️", "✝"];
+    function setIconSelection(icon) {
+      selectedIcon = ICONS.includes(icon) ? icon : "🌱";
+      document.querySelectorAll(".icon-opt").forEach((b) => {
+        b.classList.toggle("selected", b.dataset.icon === selectedIcon);
+      });
+    }
+    document.querySelectorAll(".icon-opt").forEach((b) => {
+      b.addEventListener("click", () => setIconSelection(b.dataset.icon));
+    });
+
+    function openModal() {
+      editingId = null;
+      $("#graveForm").reset();
+      setIconSelection("🌱");
+      $("#modalTitle").textContent = "새 묘비를 새깁니다";
+      $("#submitBtn").textContent = "묘비 세우기";
+      backdrop.classList.add("open");
+      $("#name").focus();
+    }
+
+    function openEditModal(g) {
+      if (!g) return;
+      editingId = g.id;
+      $("#name").value = g.name || "";
+      $("#job").value = g.job || "";
+      $("#resign_date").value = g.resign_date || "";
+      $("#tags").value = g.tags || "";
+      $("#epitaph").value = g.epitaph || "";
+      $("#editor").value = g.editor || "";
+      setIconSelection(g.icon || "✝");
+      $("#modalTitle").textContent = "묘비를 수정합니다";
+      $("#submitBtn").textContent = "수정 완료";
+      backdrop.classList.add("open");
+      $("#name").focus();
+    }
+
+    function closeModal() {
+      backdrop.classList.remove("open");
+      editingId = null;
+      $("#graveForm").reset();
+    }
+
+    $("#addBtn").addEventListener("click", openModal);
+    $("#cancelBtn").addEventListener("click", closeModal);
+    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
+
+    $("#graveForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: $("#name").value.trim(),
+        job: $("#job").value.trim(),
+        resign_date: $("#resign_date").value.trim(),
+        tags: $("#tags").value.trim(),
+        epitaph: $("#epitaph").value.trim(),
+        editor: $("#editor").value.trim(),
+        icon: selectedIcon,
+      };
+      const editing = editingId != null;
+      try {
+        const res = await fetch(editing ? `${API}/${editingId}` : API, {
+          method: editing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        // 405/500 = 옛 서버 (수정 기능/컬럼 없음) → 재시작 안내
+        if (res.status === 405 || res.status === 500) {
+          showToast("저장 실패 😢 서버를 재시작해야 켜집니다. 콘솔에서 Ctrl+C 후 py app.py 다시 실행!");
+          return;
+        }
+        if (!res.ok) throw new Error(await res.text());
+        closeModal();
+        showToast(editing ? "묘비를 수정했습니다. ✍" : "묘비를 세웠습니다. 🪦");
+        loadGraves();
+        loadCredits();
+      } catch (err) {
+        showToast("저장 실패 😢 서버 연결을 확인하세요. (서버 재시작이 필요할 수 있어요)");
+      }
+    });
+
+    // -------------------- 낮/밤 실시간 하늘 --------------------
+    // 시간대별 하늘색 키프레임 (위 → 지평선, 4단계). 사이 시간은 색을 보간.
+    const SKY = [
+      { h: 0,    s: ["#0a1026","#121a3a","#1b2548","#2a3358"] },
+      { h: 5,    s: ["#1a2348","#3a3a6b","#6b5570","#c0906a"] },
+      { h: 6.5,  s: ["#5a6aa0","#c78fa0","#f2a86a","#ffd9a0"] },
+      { h: 8,    s: ["#4a90d6","#7bbce8","#bfe0f2","#e9f5e2"] },
+      { h: 13,   s: ["#3f97df","#6fbceb","#a4d8f4","#eef7e6"] },
+      { h: 17,   s: ["#3f8fd0","#74b6e0","#cfe0e6","#f2ecc6"] },
+      { h: 19,   s: ["#2c3a6a","#8a5a90","#e0885a","#ffb86a"] },
+      { h: 20.5, s: ["#1a2348","#3a3a6b","#5a4a70","#7a5a72"] },
+      { h: 22,   s: ["#0c1230","#161e42","#20294e","#2e3760"] },
+      { h: 24,   s: ["#0a1026","#121a3a","#1b2548","#2a3358"] },
+    ];
+    const hexRgb = (x) => { const n = parseInt(x.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+    const mixc = (a, b, t) => "rgb(" + [0, 1, 2].map((i) => Math.round(lerp(a[i], b[i], t))).join(",") + ")";
+    function skyGradient(h) {
+      let A = SKY[0], B = SKY[SKY.length - 1];
+      for (let i = 0; i < SKY.length - 1; i++) {
+        if (h >= SKY[i].h && h <= SKY[i + 1].h) { A = SKY[i]; B = SKY[i + 1]; break; }
+      }
+      const t = (h - A.h) / ((B.h - A.h) || 1);
+      const c = A.s.map((s, i) => mixc(hexRgb(s), hexRgb(B.s[i]), t));
+      return `linear-gradient(180deg, ${c[0]} 0%, ${c[1]} 34%, ${c[2]} 66%, ${c[3]} 100%)`;
+    }
+    function nightness(h) {
+      if (h >= 7 && h <= 18) return 0;                  // 낮
+      if (h > 18 && h < 21) return (h - 18) / 3;        // 해질녘
+      if (h >= 21 || h < 4.5) return 1;                 // 밤
+      if (h >= 4.5 && h < 7) return 1 - (h - 4.5) / 2.5; // 동틀녘
+      return 0;
+    }
+    function arcPos(p) {
+      p = clamp(p, 0, 1);
+      return { left: 6 + p * 88, top: 46 - Math.sin(p * Math.PI) * 36 };
+    }
+    function updateSky(now) {
+      now = now || new Date();
+      const h = now.getHours() + now.getMinutes() / 60;
+      document.body.style.background = skyGradient(h);
+      const nf = nightness(h);
+
+      const sun = $("#sun");
+      if (h >= 6 && h <= 18) {
+        const a = arcPos((h - 6) / 12);
+        sun.style.left = a.left + "%"; sun.style.top = a.top + "%"; sun.style.opacity = "1";
+      } else { sun.style.opacity = "0"; }
+
+      const moon = $("#moon");
+      if (h >= 18 || h < 6) {
+        const mh = h >= 18 ? h - 18 : h + 6;            // 0..12 (밤 진행도)
+        const a = arcPos(mh / 12);
+        moon.style.left = a.left + "%"; moon.style.top = a.top + "%"; moon.style.opacity = "1";
+      } else { moon.style.opacity = "0"; }
+
+      $("#stars").style.opacity = String(nf);
+      document.querySelectorAll(".cloud").forEach((c) => { c.style.opacity = String(0.9 * (1 - nf)); });
+      const haze = document.querySelector(".haze");
+      if (haze) haze.style.opacity = String(1 - nf * 0.85);
+
+      const b = (1 - nf * 0.55).toFixed(2);             // 밤엔 잔디/언덕 어둑하게
+      document.querySelectorAll(".field-ground, .grass-front, .grass-horizon, .hills")
+        .forEach((el) => { el.style.filter = `brightness(${b})`; });
+
+      const mb = $("#madeBy");
+      if (mb) {
+        mb.style.color = nf > 0.45 ? "#d4dce6" : "#2f3a26";
+        mb.style.textShadow = nf > 0.45 ? "0 1px 4px rgba(0,0,0,0.55)" : "0 1px 0 rgba(255,255,255,0.25)";
+      }
+    }
+    function buildStars() {
+      let html = "";
+      for (let i = 0; i < 60; i++) {
+        const x = (Math.random() * 100).toFixed(2);
+        const y = (Math.random() * 96).toFixed(2);
+        const sz = (Math.random() * 1.6 + 0.6).toFixed(2);
+        const d = (Math.random() * 4).toFixed(2);
+        html += `<span class="star" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;animation-delay:${d}s"></span>`;
+      }
+      $("#stars").innerHTML = html;
+    }
+
+    // -------------------- 시작 --------------------
+    buildStars();
+    updateSky();
+    setInterval(updateSky, 60000);   // 1분마다 실제 시간 반영 (해/달 이동 · 낮밤 전환)
+    loadGraves();
+    loadCredits();
+  </script>
+</body>
+</html>

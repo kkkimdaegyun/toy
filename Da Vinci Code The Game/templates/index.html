@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>넘버 코드</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/korean-ux.css') }}">
+</head>
+<body>
+  <main class="shell">
+    <header><a class="brand" href="/">넘버 <span>코드</span></a><div id="connection" class="connection">연결 중…</div></header>
+    <section id="home-screen" class="screen home-screen">
+      <div class="hero panel"><p class="eyebrow">사내망 실시간 숫자 추리 게임</p><h1>타일을 읽고,<br>숫자를 맞혀보세요.</h1><p>동료 2~4명과 함께 상대 타일의 숫자를 먼저 모두 밝혀내세요.</p></div>
+      <div class="home-actions">
+        <form id="create-form" class="panel form-card"><h2>방 만들기</h2><label>닉네임<input id="create-nickname" maxlength="20" autocomplete="nickname" placeholder="내 이름" required></label><button type="submit">방 만들기</button></form>
+        <form id="join-form" class="panel form-card"><h2>방 참가하기</h2><label>닉네임<input id="join-nickname" maxlength="20" autocomplete="nickname" placeholder="내 이름" required></label><label>방 코드<input id="join-code" maxlength="4" autocapitalize="characters" placeholder="A7K4" required></label><button type="submit" class="secondary">방 참가하기</button></form>
+      </div>
+    </section>
+
+    <section id="lobby-screen" class="screen hidden">
+      <div class="room-heading panel"><div><p class="eyebrow">방 코드</p><h1 id="lobby-code">----</h1></div><div class="invite"><label>초대 링크<input id="invite-link" readonly></label><button id="copy-invite" class="small">초대 링크 복사</button></div></div>
+      <div class="panel lobby-panel"><div><h2>참가자 <span id="lobby-count" class="muted"></span></h2><div id="lobby-players" class="player-list"></div></div><div id="lobby-controls" class="lobby-controls"></div></div>
+    </section>
+
+    <section id="game-screen" class="screen hidden">
+      <div class="game-top panel"><div><p class="eyebrow">방 코드 <span id="game-code"></span></p><h1 id="turn-title">게임을 불러오는 중…</h1><p id="turn-detail" class="muted"></p></div><div class="deck-counter"><span id="deck-count">0</span><small>덱에 남은 타일</small></div></div>
+      <section class="panel my-area"><div class="section-title"><div><p class="eyebrow">내 패</p><h2 id="my-name"></h2></div><span id="my-status"></span></div><p class="hand-help">내 타일의 숫자는 항상 보입니다. 빨간 표시가 붙은 타일은 모두에게 공개된 타일입니다.</p><div id="my-tiles" class="tile-row"></div></section>
+      <div class="board-layout"><div id="opponents" class="opponents"></div><aside class="side-column"><section id="action-panel" class="panel action-panel"></section><section class="panel log-panel"><h3>게임 기록</h3><div id="event-log" class="event-log"></div></section></aside></div>
+    </section>
+  </main>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="game-over-modal" class="modal hidden"><div class="modal-card panel"><p class="eyebrow">게임 종료</p><h1 id="winner-text"></h1><p>다른 모든 참가자의 타일이 공개되었습니다.</p><div id="game-over-buttons" class="modal-actions"></div></div></div>
+  <script src="{{ url_for('static', filename='js/socket-client.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>
